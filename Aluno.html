@@ -1,0 +1,574 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <div class="app">
+
+    <header class="app-header">
+
+      <div>
+
+        <h1>
+          🏫 Área Escolar
+        </h1>
+
+        <p id="nomeAluno">
+          Verificando sessão...
+        </p>
+
+      </div>
+
+
+      <button
+        class="btn-logout"
+        onclick="sair()"
+      >
+        Sair
+      </button>
+
+    </header>
+
+
+    <main class="main-content">
+
+      <section class="card">
+
+        <h2>
+          Calendário de Merenda
+        </h2>
+
+
+        <p class="subtitle">
+          Consulte as refeições e os cardápios programados.
+        </p>
+
+
+        <div
+          id="listaCalendario"
+          class="calendar-list"
+        >
+          Verificando sessão...
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <script>
+
+    var PERFIS_ESCOLARES = [
+
+      "ALUNO",
+
+      "PROFESSOR",
+
+      "FUNCIONARIO"
+    ];
+
+
+    function obterTokenAluno() {
+
+      var token =
+        String(
+          sessionStorage.getItem(
+            "token"
+          ) || ""
+        ).trim();
+
+
+      var perfil =
+        String(
+          sessionStorage.getItem(
+            "perfil"
+          ) || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+      if (
+        !token ||
+        PERFIS_ESCOLARES.indexOf(
+          perfil
+        ) === -1
+      ) {
+
+        encerrarSessaoLocal();
+
+        return "";
+      }
+
+
+      return token;
+    }
+
+
+    function inicializarAluno() {
+
+      var token =
+        obterTokenAluno();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            if (
+              !resultado ||
+              !resultado.autenticado ||
+              !resultado.usuario
+            ) {
+
+              encerrarSessaoLocal();
+
+              return;
+            }
+
+
+            var perfil =
+              String(
+                resultado.usuario.perfil ||
+                ""
+              )
+              .trim()
+              .toUpperCase();
+
+
+            if (
+              PERFIS_ESCOLARES.indexOf(
+                perfil
+              ) === -1
+            ) {
+
+              encerrarSessaoLocal();
+
+              return;
+            }
+
+
+            sessionStorage.setItem(
+              "perfil",
+              perfil
+            );
+
+
+            sessionStorage.setItem(
+              "nome",
+              resultado.usuario.nome ||
+              "Usuário"
+            );
+
+
+            document
+              .getElementById(
+                "nomeAluno"
+              )
+              .textContent =
+                "Olá, " +
+                (
+                  resultado.usuario.nome ||
+                  "Usuário"
+                ) +
+                "!";
+
+
+            carregarCalendario();
+          }
+        )
+
+        .withFailureHandler(
+          function() {
+
+            encerrarSessaoLocal();
+          }
+        )
+
+        .consultarSessao(
+          token
+        );
+    }
+
+
+    function carregarCalendario() {
+
+      var lista =
+        document.getElementById(
+          "listaCalendario"
+        );
+
+
+      var token =
+        obterTokenAluno();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      lista.innerHTML =
+        "Carregando calendário...";
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(calendario) {
+
+            if (
+              !calendario ||
+              calendario.length === 0
+            ) {
+
+              lista.innerHTML =
+                "<p>Nenhum registro no calendário.</p>";
+
+              return;
+            }
+
+
+            lista.innerHTML =
+              "";
+
+
+            calendario.forEach(
+              function(item) {
+
+                var card =
+                  document.createElement(
+                    "div"
+                  );
+
+
+                card.className =
+                  "calendar-item";
+
+
+                var titulo =
+                  item.refeicao ||
+                  "Refeição";
+
+
+                var html =
+                  "<h3>" +
+                  escaparHTML(
+                    titulo
+                  ) +
+                  "</h3>" +
+
+
+                  "<p><strong>Data:</strong> " +
+                  escaparHTML(
+                    formatarData(
+                      item.data
+                    )
+                  ) +
+                  "</p>" +
+
+
+                  "<p><strong>Período:</strong> " +
+                  escaparHTML(
+                    item.periodo ||
+                    ""
+                  ) +
+                  "</p>";
+
+
+                if (
+                  item.cardapio
+                ) {
+
+                  html +=
+                    "<p><strong>Cardápio:</strong><br>" +
+
+                    escaparHTML(
+                      item.cardapio
+                    )
+                    .replace(
+                      /\n/g,
+                      "<br>"
+                    ) +
+
+                    "</p>";
+                }
+
+
+                if (
+                  item.observacao
+                ) {
+
+                  html +=
+                    "<p><strong>Observação:</strong> " +
+
+                    escaparHTML(
+                      item.observacao
+                    ) +
+
+                    "</p>";
+                }
+
+
+                card.innerHTML =
+                  html;
+
+
+                lista.appendChild(
+                  card
+                );
+              }
+            );
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              lista
+            );
+          }
+        )
+
+        .listarCalendario(
+          token
+        );
+    }
+
+
+    function tratarErroSessao(
+      erro,
+      elemento
+    ) {
+
+      var mensagem =
+        (
+          erro &&
+          erro.message
+        ) || "";
+
+
+      if (
+        mensagem.indexOf(
+          "Token não informado"
+        ) !== -1 ||
+
+        mensagem.indexOf(
+          "Sessão inválida"
+        ) !== -1 ||
+
+        mensagem.indexOf(
+          "Sessão expirada"
+        ) !== -1
+      ) {
+
+        encerrarSessaoLocal();
+
+        return;
+      }
+
+
+      elemento.innerHTML =
+        "<p class='error-message'>" +
+
+        escaparHTML(
+          mensagem ||
+          "Erro ao carregar o calendário."
+        ) +
+
+        "</p>";
+    }
+
+
+    function encerrarSessaoLocal() {
+
+      sessionStorage.clear();
+
+      carregarPagina(
+        "Index"
+      );
+    }
+
+
+    function sair() {
+
+      var token =
+        String(
+          sessionStorage.getItem(
+            "token"
+          ) || ""
+        ).trim();
+
+
+      sessionStorage.clear();
+
+
+      if (!token) {
+
+        carregarPagina(
+          "Index"
+        );
+
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function() {
+
+            carregarPagina(
+              "Index"
+            );
+          }
+        )
+
+        .withFailureHandler(
+          function() {
+
+            carregarPagina(
+              "Index"
+            );
+          }
+        )
+
+        .logout(
+          token
+        );
+    }
+
+
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "Página não encontrada."
+              );
+
+              return;
+            }
+
+
+            document.open();
+
+            document.write(
+              html
+            );
+
+            document.close();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Erro ao abrir a página."
+            );
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+    }
+
+
+    function formatarData(
+      data
+    ) {
+
+      if (!data) {
+        return "";
+      }
+
+
+      var texto =
+        String(data);
+
+
+      if (
+        texto.indexOf(
+          "T"
+        ) !== -1
+      ) {
+
+        return texto
+          .split("T")[0]
+          .split("-")
+          .reverse()
+          .join("/");
+      }
+
+
+      return texto;
+    }
+
+
+    function escaparHTML(
+      texto
+    ) {
+
+      var div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.textContent =
+        texto === undefined ||
+        texto === null
+          ? ""
+          : String(texto);
+
+
+      return div.innerHTML;
+    }
+
+
+    inicializarAluno();
+
+  </script>
+
+</body>
+
+</html>

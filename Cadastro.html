@@ -1,0 +1,358 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="card login-card">
+
+      <div class="logo">
+        📝
+      </div>
+
+
+      <h2>
+        Criar cadastro
+      </h2>
+
+
+      <p class="subtitle">
+        Cadastre-se para consultar o calendário de merenda.
+      </p>
+
+
+      <input
+        type="text"
+        id="nomeCadastro"
+        placeholder="Nome completo"
+        autocomplete="name"
+      >
+
+
+      <input
+        type="email"
+        id="emailCadastro"
+        placeholder="E-mail"
+        autocomplete="email"
+      >
+
+
+      <input
+        type="password"
+        id="senhaCadastro"
+        placeholder="Senha"
+        autocomplete="new-password"
+      >
+
+
+      <select
+        id="perfilCadastro"
+      >
+
+        <option value="ALUNO">
+          Aluno
+        </option>
+
+        <option value="PROFESSOR">
+          Professor
+        </option>
+
+        <option value="FUNCIONARIO">
+          Funcionário
+        </option>
+
+      </select>
+
+
+      <button
+        class="btn-primary"
+        id="btnCadastro"
+        onclick="cadastrar()"
+      >
+        Criar cadastro
+      </button>
+
+
+      <button
+        class="btn-back"
+        onclick="voltarLogin()"
+      >
+        Voltar para o login
+      </button>
+
+
+      <p id="mensagemCadastro"></p>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    function cadastrar() {
+
+      var nome =
+        document
+          .getElementById(
+            "nomeCadastro"
+          )
+          .value
+          .trim();
+
+
+      var email =
+        document
+          .getElementById(
+            "emailCadastro"
+          )
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      var senha =
+        document
+          .getElementById(
+            "senhaCadastro"
+          )
+          .value;
+
+
+      var perfil =
+        document
+          .getElementById(
+            "perfilCadastro"
+          )
+          .value;
+
+
+      var mensagem =
+        document.getElementById(
+          "mensagemCadastro"
+        );
+
+
+      var botao =
+        document.getElementById(
+          "btnCadastro"
+        );
+
+
+      if (!nome) {
+
+        mensagem.textContent =
+          "Digite o nome completo.";
+
+        return;
+      }
+
+
+      if (!email) {
+
+        mensagem.textContent =
+          "Digite o e-mail.";
+
+        return;
+      }
+
+
+      if (!senha) {
+
+        mensagem.textContent =
+          "Digite uma senha.";
+
+        return;
+      }
+
+
+      if (
+        senha.length < 6
+      ) {
+
+        mensagem.textContent =
+          "A senha deve ter pelo menos 6 caracteres.";
+
+        return;
+      }
+
+
+      if (
+        [
+          "ALUNO",
+          "PROFESSOR",
+          "FUNCIONARIO"
+        ]
+        .indexOf(
+          perfil
+        ) === -1
+      ) {
+
+        mensagem.textContent =
+          "Selecione um perfil válido.";
+
+        return;
+      }
+
+
+      mensagem.textContent =
+        "Criando cadastro...";
+
+
+      botao.disabled =
+        true;
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            mensagem.textContent =
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Cadastro criado com sucesso.";
+
+
+            botao.disabled =
+              false;
+
+
+            document
+              .getElementById(
+                "nomeCadastro"
+              )
+              .value =
+              "";
+
+
+            document
+              .getElementById(
+                "emailCadastro"
+              )
+              .value =
+              "";
+
+
+            document
+              .getElementById(
+                "senhaCadastro"
+              )
+              .value =
+              "";
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            mensagem.textContent =
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Não foi possível criar o cadastro.";
+
+
+            botao.disabled =
+              false;
+          }
+        )
+
+        .cadastrarUsuario(
+          {
+            nome:
+              nome,
+
+            email:
+              email,
+
+            senha:
+              senha,
+
+            perfil:
+              perfil
+          }
+        );
+    }
+
+
+    function voltarLogin() {
+
+      carregarPagina(
+        "LoginAluno"
+      );
+    }
+
+
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "Página não encontrada."
+              );
+
+              return;
+            }
+
+
+            document.open();
+
+            document.write(
+              html
+            );
+
+            document.close();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Erro ao abrir a página."
+            );
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+    }
+
+  </script>
+
+</body>
+
+</html>
