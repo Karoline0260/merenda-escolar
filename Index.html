@@ -1,0 +1,144 @@
+<!--adicionei um comentário-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="card home-card">
+
+      <div class="logo">
+        🍎
+      </div>
+
+      <h1>
+        Merenda Escolar
+      </h1>
+
+      <p class="subtitle">
+        Sistema de Calendário de Merenda Escolar
+      </p>
+
+
+      <button
+        class="btn-primary btn-large"
+        onclick="abrirLoginEscolar()"
+      >
+        🏫 Área Escolar
+      </button>
+
+
+      <button
+        class="btn-secondary btn-large"
+        onclick="abrirLoginGestao()"
+      >
+        👩‍💼 Área da Gestão
+      </button>
+
+
+      <button
+        class="btn-back btn-large"
+        onclick="abrirCadastro()"
+      >
+        📝 Criar cadastro
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "A página solicitada não foi encontrada."
+              );
+
+              return;
+            }
+
+
+            document.open();
+
+            document.write(
+              html
+            );
+
+            document.close();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Erro ao abrir a página."
+            );
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+    }
+
+
+    function abrirLoginEscolar() {
+
+      carregarPagina(
+        "LoginAluno"
+      );
+    }
+
+
+    function abrirLoginGestao() {
+
+      carregarPagina(
+        "LoginGestao"
+      );
+    }
+
+
+    function abrirCadastro() {
+
+      carregarPagina(
+        "Cadastro"
+      );
+    }
+
+  </script>
+
+</body>
+
+</html>
