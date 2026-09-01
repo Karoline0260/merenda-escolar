@@ -1,0 +1,2602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <div class="app">
+
+
+    <!-- =====================================================
+         CABEÇALHO
+         ===================================================== -->
+
+    <header class="app-header">
+
+      <div>
+
+        <h1>
+          👩‍💼 Área da Gestão
+        </h1>
+
+        <p id="nomeGestao">
+          Verificando sessão...
+        </p>
+
+      </div>
+
+
+      <button
+        class="btn-logout"
+        onclick="sairGestao()"
+      >
+        Sair
+      </button>
+
+    </header>
+
+
+    <main class="main-content">
+
+
+      <!-- =====================================================
+           REFEIÇÕES DO DIA
+           ===================================================== -->
+
+      <section class="card">
+
+        <div class="section-header">
+
+          <div>
+
+            <h2>
+              Refeições
+            </h2>
+
+            <p class="subtitle">
+              Cadastre as refeições que poderão ser usadas na programação.
+            </p>
+
+          </div>
+
+
+          <button
+            class="btn-danger btn-small"
+            onclick="limparTodasRefeicoes()"
+          >
+            Limpar todas
+          </button>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <input
+            type="hidden"
+            id="idProduto"
+          >
+
+
+          <input
+            type="text"
+            id="nomeProduto"
+            placeholder="Nome da refeição"
+          >
+
+
+          <input
+            type="text"
+            id="descricaoProduto"
+            placeholder="Descrição"
+          >
+
+        </div>
+
+
+        <div class="button-row">
+
+          <button
+            class="btn-secondary"
+            onclick="salvarProduto()"
+          >
+            Salvar Refeição
+          </button>
+
+
+          <button
+            class="btn-back"
+            onclick="limparFormularioProduto()"
+          >
+            Limpar
+          </button>
+
+        </div>
+
+
+        <p id="mensagemProduto"></p>
+
+      </section>
+
+
+      <!-- =====================================================
+           LISTA DE REFEIÇÕES
+           ===================================================== -->
+
+      <section class="card">
+
+        <div class="section-header">
+
+          <h2>
+            Refeições cadastradas
+          </h2>
+
+
+          <button
+            class="btn-small"
+            onclick="carregarProdutos()"
+          >
+            Atualizar
+          </button>
+
+        </div>
+
+
+        <div
+          id="listaProdutos"
+          class="table-container"
+        >
+          Verificando sessão...
+        </div>
+
+      </section>
+
+
+      <!-- =====================================================
+           PROGRAMAR SEMANA / MÊS
+           ===================================================== -->
+
+      <section class="card">
+
+        <h2>
+          Adicionar cardápio ao calendário
+        </h2>
+
+
+        <p class="subtitle">
+          Cadastre uma programação completa para a semana ou para o mês.
+          É possível adicionar várias refeições diferentes para o mesmo dia.
+        </p>
+
+
+        <div class="form-grid">
+
+          <select
+            id="abrangenciaCalendario"
+          >
+
+            <option value="SEMANA">
+              Semana
+            </option>
+
+            <option value="MES">
+              Mês
+            </option>
+
+          </select>
+
+
+          <input
+            type="date"
+            id="dataReferenciaCalendario"
+          >
+
+        </div>
+
+
+        <div class="button-row">
+
+          <button
+            class="btn-secondary"
+            onclick="montarPeriodoCalendario()"
+          >
+            Montar período
+          </button>
+
+
+          <button
+            class="btn-back"
+            onclick="limparProgramacao()"
+          >
+            Limpar programação
+          </button>
+
+        </div>
+
+
+        <p id="infoPeriodoCalendario"></p>
+
+
+        <!-- ===================================================
+             PROGRAMACAO DINÂMICA
+             =================================================== -->
+
+        <div
+          id="programacaoCalendario"
+        ></div>
+
+
+        <div class="button-row">
+
+          <button
+            class="btn-primary"
+            onclick="adicionarLinhaProgramacao()"
+          >
+            + Adicionar outra refeição
+          </button>
+
+
+          <button
+            class="btn-secondary"
+            onclick="salvarProgramacaoCalendario()"
+          >
+            Salvar programação
+          </button>
+
+        </div>
+
+
+        <p id="mensagemCalendario"></p>
+
+      </section>
+
+
+      <!-- =====================================================
+           CALENDÁRIO
+           ===================================================== -->
+
+      <section class="card">
+
+        <div class="section-header">
+
+          <div>
+
+            <h2>
+              Calendário
+            </h2>
+
+            <p class="subtitle">
+              Visualização de todas as refeições programadas.
+            </p>
+
+          </div>
+
+
+          <button
+            class="btn-small"
+            onclick="carregarCalendario()"
+          >
+            Atualizar
+          </button>
+
+        </div>
+
+
+        <div
+          id="listaCalendario"
+          class="table-container"
+        >
+          Verificando sessão...
+        </div>
+
+
+        <div class="button-row">
+
+          <button
+            class="btn-danger"
+            onclick="limparTodoCalendario()"
+          >
+            Limpar todo o calendário
+          </button>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <script>
+
+
+    /**
+     * ========================================================
+     * VARIÁVEIS
+     * ========================================================
+     */
+
+    var listaRefeicoesDisponiveis = [];
+
+
+    var periodoAtual = null;
+
+
+    /**
+     * ========================================================
+     * TOKEN
+     * ========================================================
+     */
+    function obterTokenGestao() {
+
+      var token =
+        String(
+          sessionStorage.getItem(
+            "token"
+          ) || ""
+        ).trim();
+
+
+      var perfil =
+        String(
+          sessionStorage.getItem(
+            "perfil"
+          ) || ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+      if (
+        !token ||
+        perfil !== "GESTAO"
+      ) {
+
+        encerrarSessaoLocal();
+
+        return "";
+      }
+
+
+      return token;
+    }
+
+
+    /**
+     * ========================================================
+     * INICIALIZAR
+     * ========================================================
+     */
+    function inicializarGestao() {
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            if (
+              !resultado ||
+              !resultado.autenticado ||
+              !resultado.usuario
+            ) {
+
+              encerrarSessaoLocal();
+
+              return;
+            }
+
+
+            var perfil =
+              String(
+                resultado.usuario.perfil ||
+                ""
+              )
+              .trim()
+              .toUpperCase();
+
+
+            if (
+              perfil !== "GESTAO"
+            ) {
+
+              encerrarSessaoLocal();
+
+              return;
+            }
+
+
+            sessionStorage.setItem(
+              "perfil",
+              perfil
+            );
+
+
+            sessionStorage.setItem(
+              "nome",
+              resultado.usuario.nome ||
+              "Gestão"
+            );
+
+
+            document
+              .getElementById(
+                "nomeGestao"
+              )
+              .textContent =
+                "Olá, " +
+                (
+                  resultado.usuario.nome ||
+                  "Gestão"
+                ) +
+                "!";
+
+
+            carregarProdutos();
+
+            carregarCalendario();
+          }
+        )
+
+        .withFailureHandler(
+          function() {
+
+            encerrarSessaoLocal();
+          }
+        )
+
+        .consultarSessao(
+          token
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * CARREGAR REFEIÇÕES
+     * ========================================================
+     */
+    function carregarProdutos() {
+
+      var lista =
+        document.getElementById(
+          "listaProdutos"
+        );
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      lista.innerHTML =
+        "Carregando refeições...";
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(produtos) {
+
+            listaRefeicoesDisponiveis =
+              Array.isArray(
+                produtos
+              )
+                ? produtos
+                : [];
+
+
+            atualizarSelectsDeRefeicoes();
+
+
+            if (
+              listaRefeicoesDisponiveis.length === 0
+            ) {
+
+              lista.innerHTML =
+                "<p>Nenhuma refeição cadastrada.</p>";
+
+              return;
+            }
+
+
+            var html =
+              "<table>" +
+
+              "<thead>" +
+
+              "<tr>" +
+
+              "<th>Refeição</th>" +
+
+              "<th>Descrição</th>" +
+
+              "<th>Status</th>" +
+
+              "<th>Ações</th>" +
+
+              "</tr>" +
+
+              "</thead>" +
+
+              "<tbody>";
+
+
+            listaRefeicoesDisponiveis.forEach(
+              function(produto) {
+
+                html +=
+
+                  "<tr>" +
+
+                  "<td>" +
+                  escaparHTML(
+                    produto.nome
+                  ) +
+                  "</td>" +
+
+                  "<td>" +
+                  escaparHTML(
+                    produto.descricao
+                  ) +
+                  "</td>" +
+
+                  "<td>" +
+                  escaparHTML(
+                    produto.ativo
+                  ) +
+                  "</td>" +
+
+                  "<td>" +
+
+                  "<button " +
+                  "class='btn-small' " +
+                  "onclick=\"editarProduto('" +
+                  escaparAtributo(
+                    produto.id_produto
+                  ) +
+                  "')\">" +
+                  "Editar" +
+                  "</button> " +
+
+                  "<button " +
+                  "class='btn-danger btn-small' " +
+                  "onclick=\"excluirProduto('" +
+                  escaparAtributo(
+                    produto.id_produto
+                  ) +
+                  "')\">" +
+                  "Excluir" +
+                  "</button>" +
+
+                  "</td>" +
+
+                  "</tr>";
+              }
+            );
+
+
+            html +=
+              "</tbody>" +
+              "</table>";
+
+
+            lista.innerHTML =
+              html;
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              lista,
+              "Erro ao carregar refeições."
+            );
+          }
+        )
+
+        .listarProdutos(
+          token
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * ATUALIZAR SELECTS DE REFEIÇÕES
+     * ========================================================
+     */
+    function atualizarSelectsDeRefeicoes() {
+
+      var selects =
+        document.querySelectorAll(
+          ".select-refeicao-programacao"
+        );
+
+
+      for (
+        var i = 0;
+        i < selects.length;
+        i++
+      ) {
+
+        var select =
+          selects[i];
+
+
+        var valorAtual =
+          select.value;
+
+
+        select.innerHTML =
+          "<option value=''>" +
+          "Selecione a refeição" +
+          "</option>";
+
+
+        listaRefeicoesDisponiveis.forEach(
+          function(refeicao) {
+
+            if (
+              !refeicao ||
+              !refeicao.id_produto
+            ) {
+
+              return;
+            }
+
+
+            if (
+              String(
+                refeicao.ativo || ""
+              )
+              .trim()
+              .toUpperCase() !==
+              "SIM"
+            ) {
+
+              return;
+            }
+
+
+            var option =
+              document.createElement(
+                "option"
+              );
+
+
+            option.value =
+              refeicao.id_produto;
+
+
+            option.textContent =
+              refeicao.nome ||
+              "";
+
+
+            select.appendChild(
+              option
+            );
+          }
+        );
+
+
+        if (
+          valorAtual
+        ) {
+
+          select.value =
+            valorAtual;
+        }
+      }
+    }
+
+
+    /**
+     * ========================================================
+     * SALVAR REFEIÇÃO
+     * ========================================================
+     */
+    function salvarProduto() {
+
+      var id =
+        document
+          .getElementById(
+            "idProduto"
+          )
+          .value
+          .trim();
+
+
+      var nome =
+        document
+          .getElementById(
+            "nomeProduto"
+          )
+          .value
+          .trim();
+
+
+      var descricao =
+        document
+          .getElementById(
+            "descricaoProduto"
+          )
+          .value
+          .trim();
+
+
+      var mensagem =
+        document.getElementById(
+          "mensagemProduto"
+        );
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      if (!nome) {
+
+        mensagem.textContent =
+          "Digite o nome da refeição.";
+
+        return;
+      }
+
+
+      mensagem.textContent =
+        "Salvando...";
+
+
+      if (id) {
+
+        atualizarProduto(
+          id,
+          nome,
+          descricao
+        );
+
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            mensagem.textContent =
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Refeição cadastrada com sucesso.";
+
+
+            limparFormularioProduto();
+
+            carregarProdutos();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              mensagem,
+              "Erro ao cadastrar refeição."
+            );
+          }
+        )
+
+        .cadastrarProduto(
+          token,
+          {
+
+            nome:
+              nome,
+
+            descricao:
+              descricao
+          }
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * ATUALIZAR REFEIÇÃO
+     * ========================================================
+     */
+    function atualizarProduto(
+      id,
+      nome,
+      descricao
+    ) {
+
+      var mensagem =
+        document.getElementById(
+          "mensagemProduto"
+        );
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      mensagem.textContent =
+        "Atualizando...";
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            mensagem.textContent =
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Refeição atualizada com sucesso.";
+
+
+            limparFormularioProduto();
+
+            carregarProdutos();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              mensagem,
+              "Erro ao atualizar refeição."
+            );
+          }
+        )
+
+        .atualizarProduto(
+          token,
+          id,
+          {
+
+            nome:
+              nome,
+
+            descricao:
+              descricao,
+
+            ativo:
+              "SIM"
+          }
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * EDITAR REFEIÇÃO
+     * ========================================================
+     */
+    function editarProduto(
+      idProduto
+    ) {
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(produto) {
+
+            if (!produto) {
+
+              alert(
+                "Refeição não encontrada."
+              );
+
+              return;
+            }
+
+
+            document
+              .getElementById(
+                "idProduto"
+              )
+              .value =
+                produto.id_produto ||
+                "";
+
+
+            document
+              .getElementById(
+                "nomeProduto"
+              )
+              .value =
+                produto.nome ||
+                "";
+
+
+            document
+              .getElementById(
+                "descricaoProduto"
+              )
+              .value =
+                produto.descricao ||
+                "";
+
+
+            document
+              .getElementById(
+                "mensagemProduto"
+              )
+              .textContent =
+                "Editando refeição.";
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              null,
+              "Erro ao buscar refeição."
+            );
+          }
+        )
+
+        .buscarProdutoPorId(
+          token,
+          idProduto
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * EXCLUIR REFEIÇÃO
+     * ========================================================
+     */
+    function excluirProduto(
+      idProduto
+    ) {
+
+      if (
+        !window.confirm(
+          "Deseja realmente excluir esta refeição?"
+        )
+      ) {
+
+        return;
+      }
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            alert(
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Refeição excluída."
+            );
+
+
+            limparFormularioProduto();
+
+            carregarProdutos();
+
+            carregarCalendario();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              null,
+              "Erro ao excluir refeição."
+            );
+          }
+        )
+
+        .excluirProduto(
+          token,
+          idProduto
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * LIMPAR TODAS AS REFEIÇÕES
+     * ========================================================
+     */
+    function limparTodasRefeicoes() {
+
+      if (
+        !window.confirm(
+          "Deseja realmente apagar TODAS as refeições cadastradas?"
+        )
+      ) {
+
+        return;
+      }
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            alert(
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Refeições removidas."
+            );
+
+
+            limparFormularioProduto();
+
+            carregarProdutos();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Não foi possível limpar as refeições."
+            );
+          }
+        )
+
+        .excluirTodasRefeicoes(
+          token
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * LIMPAR FORMULÁRIO DE REFEIÇÃO
+     * ========================================================
+     */
+    function limparFormularioProduto() {
+
+      document
+        .getElementById(
+          "idProduto"
+        )
+        .value =
+        "";
+
+
+      document
+        .getElementById(
+          "nomeProduto"
+        )
+        .value =
+        "";
+
+
+      document
+        .getElementById(
+          "descricaoProduto"
+        )
+        .value =
+        "";
+
+
+      document
+        .getElementById(
+          "mensagemProduto"
+        )
+        .textContent =
+        "";
+    }
+
+
+    /**
+     * ========================================================
+     * MONTAR PERÍODO
+     * ========================================================
+     */
+    function montarPeriodoCalendario() {
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      var abrangencia =
+        document
+          .getElementById(
+            "abrangenciaCalendario"
+          )
+          .value;
+
+
+      var dataReferencia =
+        document
+          .getElementById(
+            "dataReferenciaCalendario"
+          )
+          .value;
+
+
+      var info =
+        document.getElementById(
+          "infoPeriodoCalendario"
+        );
+
+
+      if (
+        !dataReferencia
+      ) {
+
+        info.textContent =
+          "Escolha a data de referência.";
+
+        return;
+      }
+
+
+      info.textContent =
+        "Montando período...";
+
+
+      var data =
+        criarDataLocal(
+          dataReferencia
+        );
+
+
+      var inicio =
+        new Date(
+          data.getTime()
+        );
+
+
+      var fim;
+
+
+      if (
+        abrangencia === "SEMANA"
+      ) {
+
+        var diaSemana =
+          inicio.getDay();
+
+
+        var distanciaSegunda =
+          diaSemana === 0
+            ? 6
+            : diaSemana - 1;
+
+
+        inicio.setDate(
+          inicio.getDate() -
+          distanciaSegunda
+        );
+
+
+        fim =
+          new Date(
+            inicio.getTime()
+          );
+
+
+        fim.setDate(
+          inicio.getDate() + 6
+        );
+      }
+
+
+      else {
+
+        inicio =
+          new Date(
+            data.getFullYear(),
+            data.getMonth(),
+            1
+          );
+
+
+        fim =
+          new Date(
+            data.getFullYear(),
+            data.getMonth() + 1,
+            0
+          );
+      }
+
+
+      periodoAtual = {
+
+        abrangencia:
+          abrangencia,
+
+        inicio:
+          formatarDataInput(
+            inicio
+          ),
+
+        fim:
+          formatarDataInput(
+            fim
+          )
+      };
+
+
+      var mensagemPeriodo =
+        formatarDataVisual(
+          inicio
+        ) +
+        " até " +
+        formatarDataVisual(
+          fim
+        );
+
+
+      info.textContent =
+        (
+          abrangencia === "SEMANA"
+            ? "Semana: "
+            : "Mês: "
+        ) +
+        mensagemPeriodo;
+
+
+      criarLinhasProgramacao(
+        inicio,
+        fim
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * CRIAR LINHAS DO PERÍODO
+     * ========================================================
+     */
+    function criarLinhasProgramacao(
+      inicio,
+      fim
+    ) {
+
+      var container =
+        document.getElementById(
+          "programacaoCalendario"
+        );
+
+
+      container.innerHTML =
+        "";
+
+
+      var atual =
+        new Date(
+          inicio.getTime()
+        );
+
+
+      while (
+        atual.getTime() <=
+        fim.getTime()
+      ) {
+
+        adicionarLinhaProgramacao(
+          formatarDataInput(
+            atual
+          )
+        );
+
+
+        atual.setDate(
+          atual.getDate() + 1
+        );
+      }
+
+
+      atualizarSelectsDeRefeicoes();
+    }
+
+
+    /**
+     * ========================================================
+     * ADICIONAR LINHA DE PROGRAMAÇÃO
+     * ========================================================
+     */
+    function adicionarLinhaProgramacao(
+      dataInicial
+    ) {
+
+      var container =
+        document.getElementById(
+          "programacaoCalendario"
+        );
+
+
+      var linha =
+        document.createElement(
+          "div"
+        );
+
+
+      linha.className =
+        "card";
+
+      linha.style.marginBottom =
+        "12px";
+
+
+      var dataAtual =
+        dataInicial ||
+        (
+          periodoAtual
+            ? periodoAtual.inicio
+            : ""
+        );
+
+
+      linha.innerHTML =
+
+        "<div class='form-grid'>" +
+
+        "<input " +
+        "type='date' " +
+        "class='data-programacao' " +
+        "value='" +
+        escaparAtributo(
+          dataAtual
+        ) +
+        "'>" +
+
+        "<select class='select-refeicao-programacao'>" +
+
+        "<option value=''>" +
+        "Selecione a refeição" +
+        "</option>" +
+
+        "</select>" +
+
+        "<select class='periodo-programacao'>" +
+
+        "<option value=''>" +
+        "Selecione o horário" +
+        "</option>" +
+
+        "<option value='15:55'>" +
+        "15:55" +
+        "</option>" +
+
+        "<option value='18:45'>" +
+        "18:45" +
+        "</option>" +
+
+        "</select>" +
+
+        "<input " +
+        "type='text' " +
+        "class='cardapio-programacao' " +
+        "placeholder='Cardápio'>" +
+
+        "</div>" +
+
+        "<textarea " +
+        "class='observacao-programacao' " +
+        "rows='2' " +
+        "placeholder='Observação'></textarea>" +
+
+        "<div class='button-row'>" +
+
+        "<button " +
+        "type='button' " +
+        "class='btn-danger btn-small' " +
+        "onclick='removerLinhaProgramacao(this)'>" +
+
+        "Remover" +
+
+        "</button>" +
+
+        "</div>";
+
+
+      container.appendChild(
+        linha
+      );
+
+
+      atualizarSelectsDeRefeicoes();
+    }
+
+
+    /**
+     * ========================================================
+     * REMOVER LINHA
+     * ========================================================
+     */
+    function removerLinhaProgramacao(
+      botao
+    ) {
+
+      var linha =
+        botao.closest(
+          ".card"
+        );
+
+
+      if (
+        linha
+      ) {
+
+        linha.remove();
+      }
+    }
+
+
+    /**
+     * ========================================================
+     * SALVAR PROGRAMAÇÃO
+     * ========================================================
+     */
+    function salvarProgramacaoCalendario() {
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      var mensagem =
+        document.getElementById(
+          "mensagemCalendario"
+        );
+
+
+      if (
+        !periodoAtual
+      ) {
+
+        mensagem.textContent =
+          "Primeiro monte a semana ou o mês.";
+
+        return;
+      }
+
+
+      var linhas =
+        document.querySelectorAll(
+          "#programacaoCalendario .card"
+        );
+
+
+      if (
+        linhas.length === 0
+      ) {
+
+        mensagem.textContent =
+          "Adicione pelo menos uma programação.";
+
+        return;
+      }
+
+
+      var registros = [];
+
+
+      for (
+        var i = 0;
+        i < linhas.length;
+        i++
+      ) {
+
+        var linha =
+          linhas[i];
+
+
+        var data =
+          linha
+            .querySelector(
+              ".data-programacao"
+            )
+            .value;
+
+
+        var idRefeicao =
+          linha
+            .querySelector(
+              ".select-refeicao-programacao"
+            )
+            .value;
+
+
+        var periodo =
+          linha
+            .querySelector(
+              ".periodo-programacao"
+            )
+            .value;
+
+
+        var cardapio =
+          linha
+            .querySelector(
+              ".cardapio-programacao"
+            )
+            .value
+            .trim();
+
+
+        var observacao =
+          linha
+            .querySelector(
+              ".observacao-programacao"
+            )
+            .value
+            .trim();
+
+
+        if (!data) {
+
+          mensagem.textContent =
+            "Todas as linhas precisam ter uma data.";
+
+          return;
+        }
+
+
+        if (!dataDentroDoPeriodo(
+          data,
+          periodoAtual
+        )) {
+
+          mensagem.textContent =
+            "A data " +
+            formatarDataVisual(
+              criarDataLocal(
+                data
+              )
+            ) +
+            " está fora do período selecionado.";
+
+          return;
+        }
+
+
+        if (!idRefeicao) {
+
+          mensagem.textContent =
+            "Selecione a refeição em todas as linhas.";
+
+          return;
+        }
+
+
+        if (
+          [
+            "15:55",
+            "18:45"
+          ].indexOf(
+            periodo
+          ) === -1
+        ) {
+
+          mensagem.textContent =
+            "O horário deve ser 15:55 ou 18:45.";
+
+          return;
+        }
+
+
+        if (!cardapio) {
+
+          mensagem.textContent =
+            "Informe o cardápio em todas as linhas.";
+
+          return;
+        }
+
+
+        registros.push({
+
+          data:
+            data,
+
+          id_refeicao:
+            idRefeicao,
+
+          periodo:
+            periodo,
+
+          cardapio:
+            cardapio,
+
+          observacao:
+            observacao
+        });
+      }
+
+
+      mensagem.textContent =
+        "Salvando programação...";
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            mensagem.textContent =
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Programação salva com sucesso.";
+
+
+            limparProgramacao();
+
+            carregarCalendario();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              mensagem,
+              "Erro ao salvar programação."
+            );
+          }
+        )
+
+        .cadastrarCalendariosPeriodo(
+          token,
+          {
+
+            abrangencia:
+              periodoAtual.abrangencia,
+
+            dataReferencia:
+              periodoAtual.inicio,
+
+            registros:
+              registros
+          }
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * LIMPAR PROGRAMAÇÃO
+     * ========================================================
+     */
+    function limparProgramacao() {
+
+      periodoAtual =
+        null;
+
+
+      document
+        .getElementById(
+          "dataReferenciaCalendario"
+        )
+        .value =
+        "";
+
+
+      document
+        .getElementById(
+          "abrangenciaCalendario"
+        )
+        .value =
+        "SEMANA";
+
+
+      document
+        .getElementById(
+          "programacaoCalendario"
+        )
+        .innerHTML =
+        "";
+
+
+      document
+        .getElementById(
+          "infoPeriodoCalendario"
+        )
+        .textContent =
+        "";
+
+
+      document
+        .getElementById(
+          "mensagemCalendario"
+        )
+        .textContent =
+        "";
+    }
+
+
+    /**
+     * ========================================================
+     * CARREGAR CALENDÁRIO
+     * ========================================================
+     */
+    function carregarCalendario() {
+
+      var lista =
+        document.getElementById(
+          "listaCalendario"
+        );
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      lista.innerHTML =
+        "Carregando calendário...";
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(calendario) {
+
+            if (
+              !calendario ||
+              calendario.length === 0
+            ) {
+
+              lista.innerHTML =
+                "<p>Nenhum registro no calendário.</p>";
+
+              return;
+            }
+
+
+            var html =
+              "<table>" +
+
+              "<thead>" +
+
+              "<tr>" +
+
+              "<th>Data</th>" +
+
+              "<th>Horário</th>" +
+
+              "<th>Refeição</th>" +
+
+              "<th>Cardápio</th>" +
+
+              "<th>Observação</th>" +
+
+              "<th>Ação</th>" +
+
+              "</tr>" +
+
+              "</thead>" +
+
+              "<tbody>";
+
+
+            calendario.forEach(
+              function(item) {
+
+                html +=
+
+                  "<tr>" +
+
+                  "<td>" +
+
+                  escaparHTML(
+                    formatarData(
+                      item.data
+                    )
+                  ) +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  escaparHTML(
+                    normalizarHorarioCliente(
+                      item.periodo
+                    )
+                  ) +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  escaparHTML(
+                    item.refeicao ||
+                    ""
+                  ) +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  escaparHTML(
+                    item.cardapio ||
+                    ""
+                  )
+                  .replace(
+                    /\n/g,
+                    "<br>"
+                  ) +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  escaparHTML(
+                    item.observacao ||
+                    ""
+                  ) +
+
+                  "</td>" +
+
+                  "<td>" +
+
+                  "<button " +
+
+                  "class='btn-danger btn-small' " +
+
+                  "onclick=\"excluirCalendario('" +
+
+                  escaparAtributo(
+                    item.id_calendario
+                  ) +
+
+                  "')\">" +
+
+                  "Excluir" +
+
+                  "</button>" +
+
+                  "</td>" +
+
+                  "</tr>";
+              }
+            );
+
+
+            html +=
+              "</tbody>" +
+              "</table>";
+
+
+            lista.innerHTML =
+              html;
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              lista,
+              "Erro ao carregar calendário."
+            );
+          }
+        )
+
+        .listarCalendario(
+          token
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * EXCLUIR REGISTRO
+     * ========================================================
+     */
+    function excluirCalendario(
+      idCalendario
+    ) {
+
+      if (
+        !window.confirm(
+          "Deseja excluir este registro do calendário?"
+        )
+      ) {
+
+        return;
+      }
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            alert(
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Registro excluído."
+            );
+
+
+            carregarCalendario();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            tratarErroSessao(
+              erro,
+              null,
+              "Erro ao excluir registro."
+            );
+          }
+        )
+
+        .excluirCalendario(
+          token,
+          idCalendario
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * LIMPAR TODO O CALENDÁRIO
+     * ========================================================
+     */
+    function limparTodoCalendario() {
+
+      if (
+        !window.confirm(
+          "Deseja realmente apagar TODOS os registros do calendário?"
+        )
+      ) {
+
+        return;
+      }
+
+
+      var token =
+        obterTokenGestao();
+
+
+      if (!token) {
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            alert(
+              (
+                resultado &&
+                resultado.mensagem
+              ) ||
+              "Calendário limpo."
+            );
+
+
+            carregarCalendario();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Não foi possível limpar o calendário."
+            );
+          }
+        )
+
+        .excluirTodosCalendario(
+          token
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * SAIR
+     * ========================================================
+     */
+    function sairGestao() {
+
+      var token =
+        String(
+          sessionStorage.getItem(
+            "token"
+          ) || ""
+        ).trim();
+
+
+      sessionStorage.clear();
+
+
+      if (!token) {
+
+        carregarPagina(
+          "Index"
+        );
+
+        return;
+      }
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function() {
+
+            carregarPagina(
+              "Index"
+            );
+          }
+        )
+
+        .withFailureHandler(
+          function() {
+
+            carregarPagina(
+              "Index"
+            );
+          }
+        )
+
+        .logout(
+          token
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * ENCERRAR SESSÃO
+     * ========================================================
+     */
+    function encerrarSessaoLocal() {
+
+      sessionStorage.clear();
+
+      carregarPagina(
+        "Index"
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * TRATAR ERRO DE SESSÃO
+     * ========================================================
+     */
+    function tratarErroSessao(
+      erro,
+      elemento,
+      mensagemPadrao
+    ) {
+
+      var mensagem =
+        (
+          erro &&
+          erro.message
+        ) || "";
+
+
+      if (
+        mensagem.indexOf(
+          "Token não informado"
+        ) !== -1 ||
+
+        mensagem.indexOf(
+          "Sessão inválida"
+        ) !== -1 ||
+
+        mensagem.indexOf(
+          "Sessão expirada"
+        ) !== -1
+      ) {
+
+        sessionStorage.clear();
+
+
+        alert(
+          "Sua sessão terminou. Faça login novamente."
+        );
+
+
+        carregarPagina(
+          "Index"
+        );
+
+
+        return;
+      }
+
+
+      if (elemento) {
+
+        elemento.innerHTML =
+          "<p class='error-message'>" +
+
+          escaparHTML(
+            mensagem ||
+            mensagemPadrao
+          ) +
+
+          "</p>";
+
+      } else {
+
+        alert(
+          mensagem ||
+          mensagemPadrao
+        );
+      }
+    }
+
+
+    /**
+     * ========================================================
+     * CARREGAR PÁGINA
+     * ========================================================
+     */
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "Página não encontrada."
+              );
+
+              return;
+            }
+
+
+            document.open();
+
+            document.write(
+              html
+            );
+
+            document.close();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Erro ao abrir a página."
+            );
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+    }
+
+
+    /**
+     * ========================================================
+     * DATA LOCAL
+     * ========================================================
+     */
+    function criarDataLocal(
+      valor
+    ) {
+
+      var partes =
+        String(
+          valor
+        ).split("-");
+
+
+      return new Date(
+        Number(partes[0]),
+        Number(partes[1]) - 1,
+        Number(partes[2])
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * FORMATAR DATA PARA INPUT
+     * ========================================================
+     */
+    function formatarDataInput(
+      data
+    ) {
+
+      return (
+        String(
+          data.getFullYear()
+        ) +
+        "-" +
+        String(
+          data.getMonth() + 1
+        ).padStart(
+          2,
+          "0"
+        ) +
+        "-" +
+        String(
+          data.getDate()
+        ).padStart(
+          2,
+          "0"
+        )
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * FORMATAR DATA VISUAL
+     * ========================================================
+     */
+    function formatarDataVisual(
+      data
+    ) {
+
+      return (
+        String(
+          data.getDate()
+        ).padStart(
+          2,
+          "0"
+        ) +
+        "/" +
+        String(
+          data.getMonth() + 1
+        ).padStart(
+          2,
+          "0"
+        ) +
+        "/" +
+        data.getFullYear()
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * VERIFICAR DATA NO PERÍODO
+     * ========================================================
+     */
+    function dataDentroDoPeriodo(
+      dataTexto,
+      periodo
+    ) {
+
+      var data =
+        criarDataLocal(
+          dataTexto
+        );
+
+
+      var inicio =
+        criarDataLocal(
+          periodo.inicio
+        );
+
+
+      var fim =
+        criarDataLocal(
+          periodo.fim
+        );
+
+
+      data.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      inicio.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      fim.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      return (
+        data >= inicio &&
+        data <= fim
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * FORMATAR DATA DA LISTA
+     * ========================================================
+     */
+    function formatarData(
+      data
+    ) {
+
+      if (!data) {
+        return "";
+      }
+
+
+      var texto =
+        String(
+          data
+        );
+
+
+      if (
+        texto.indexOf(
+          "T"
+        ) !== -1
+      ) {
+
+        return texto
+          .split("T")[0]
+          .split("-")
+          .reverse()
+          .join("/");
+      }
+
+
+      return texto;
+    }
+
+
+    /**
+     * ========================================================
+     * NORMALIZAR HORÁRIO NO CLIENTE
+     * ========================================================
+     */
+    function normalizarHorarioCliente(
+      valor
+    ) {
+
+      if (
+        valor === undefined ||
+        valor === null
+      ) {
+
+        return "";
+      }
+
+
+      var texto =
+        String(
+          valor
+        ).trim();
+
+
+      var encontrado =
+        texto.match(
+          /(\d{1,2}):(\d{2})(?::\d{2})?/
+        );
+
+
+      if (!encontrado) {
+        return "";
+      }
+
+
+      return (
+        String(
+          encontrado[1]
+        ).padStart(
+          2,
+          "0"
+        ) +
+        ":" +
+        String(
+          encontrado[2]
+        ).padStart(
+          2,
+          "0"
+        )
+      );
+    }
+
+
+    /**
+     * ========================================================
+     * ESCAPAR HTML
+     * ========================================================
+     */
+    function escaparHTML(
+      texto
+    ) {
+
+      var div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.textContent =
+        texto === undefined ||
+        texto === null
+          ? ""
+          : String(texto);
+
+
+      return div.innerHTML;
+    }
+
+
+    /**
+     * ========================================================
+     * ESCAPAR ATRIBUTO
+     * ========================================================
+     */
+    function escaparAtributo(
+      texto
+    ) {
+
+      return String(
+        texto === undefined ||
+        texto === null
+          ? ""
+          : texto
+      )
+      .replace(
+        /\\/g,
+        "\\\\"
+      )
+      .replace(
+        /'/g,
+        "\\'"
+      );
+    }
+
+
+    inicializarGestao();
+
+  </script>
+
+</body>
+
+</html>
