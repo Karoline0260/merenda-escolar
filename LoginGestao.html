@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="card login-card">
+
+      <div class="logo">👩‍💼</div>
+
+      <h2>Login da Gestão</h2>
+
+      <p class="subtitle">
+        Acesso administrativo do sistema.
+      </p>
+
+      <input
+        type="email"
+        id="emailGestao"
+        placeholder="E-mail"
+        autocomplete="username"
+      >
+
+      <input
+        type="password"
+        id="senhaGestao"
+        placeholder="Senha"
+        autocomplete="current-password"
+      >
+
+      <button
+        class="btn-secondary"
+        id="btnLoginGestao"
+        onclick="loginGestao()"
+      >
+        Entrar
+      </button>
+
+      <button
+        class="btn-back"
+        onclick="voltar()"
+      >
+        Voltar
+      </button>
+
+      <p id="mensagemLogin"></p>
+
+    </div>
+
+  </div>
+
+  <script>
+
+    function salvarSessao(resultado) {
+
+      if (
+        !resultado ||
+        !resultado.sucesso ||
+        !resultado.token ||
+        !resultado.usuario
+      ) {
+
+        throw new Error(
+          "O servidor não retornou uma sessão válida."
+        );
+      }
+
+      var token =
+        String(
+          resultado.token
+        ).trim();
+
+      var perfil =
+        String(
+          resultado.usuario.perfil || ""
+        )
+        .trim()
+        .toUpperCase();
+
+      if (!token) {
+
+        throw new Error(
+          "Nenhum token foi recebido."
+        );
+      }
+
+      sessionStorage.setItem(
+        "token",
+        token
+      );
+
+      sessionStorage.setItem(
+        "perfil",
+        perfil
+      );
+
+      sessionStorage.setItem(
+        "nome",
+        resultado.usuario.nome || "Gestão"
+      );
+
+      return token;
+    }
+
+
+    function loginGestao() {
+
+      var email =
+        document
+          .getElementById("emailGestao")
+          .value
+          .trim()
+          .toLowerCase();
+
+      var senha =
+        document
+          .getElementById("senhaGestao")
+          .value;
+
+      var mensagem =
+        document.getElementById(
+          "mensagemLogin"
+        );
+
+      var botao =
+        document.getElementById(
+          "btnLoginGestao"
+        );
+
+      if (!email) {
+
+        mensagem.textContent =
+          "Digite o e-mail.";
+
+        return;
+      }
+
+      if (!senha) {
+
+        mensagem.textContent =
+          "Digite a senha.";
+
+        return;
+      }
+
+      mensagem.textContent =
+        "Entrando...";
+
+      botao.disabled =
+        true;
+
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("perfil");
+      sessionStorage.removeItem("nome");
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            try {
+
+              salvarSessao(
+                resultado
+              );
+
+              if (
+                String(
+                  resultado.usuario.perfil || ""
+                )
+                .trim()
+                .toUpperCase() !== "GESTAO"
+              ) {
+
+                throw new Error(
+                  "Este acesso é exclusivo da Gestão."
+                );
+              }
+
+              carregarPagina(
+                "Gestao"
+              );
+
+            } catch (erro) {
+
+              mensagem.textContent =
+                erro.message;
+
+              botao.disabled =
+                false;
+            }
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            mensagem.textContent =
+              (
+                erro &&
+                erro.message
+              ) ||
+              "E-mail ou senha inválidos.";
+
+            botao.disabled =
+              false;
+          }
+        )
+
+        .login(
+          {
+            email: email,
+            senha: senha,
+            perfil: "GESTAO"
+          }
+        );
+    }
+
+
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "Página solicitada não encontrada."
+              );
+
+              return;
+            }
+
+            document.open();
+            document.write(html);
+            document.close();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Erro ao abrir a página."
+            );
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+    }
+
+
+    function voltar() {
+
+      sessionStorage.clear();
+
+      carregarPagina(
+        "Index"
+      );
+    }
+
+  </script>
+
+</body>
+</html>

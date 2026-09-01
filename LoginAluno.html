@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="card login-card">
+
+      <div class="logo">
+        🏫
+      </div>
+
+
+      <h2>
+        Acesso Escolar
+      </h2>
+
+
+      <p class="subtitle">
+        Entre como aluno, professor ou funcionário.
+      </p>
+
+
+      <input
+        type="email"
+        id="emailAluno"
+        placeholder="E-mail"
+        autocomplete="username"
+      >
+
+
+      <input
+        type="password"
+        id="senhaAluno"
+        placeholder="Senha"
+        autocomplete="current-password"
+      >
+
+
+      <select
+        id="perfilAluno"
+      >
+
+        <option value="ALUNO">
+          Aluno
+        </option>
+
+        <option value="PROFESSOR">
+          Professor
+        </option>
+
+        <option value="FUNCIONARIO">
+          Funcionário
+        </option>
+
+      </select>
+
+
+      <button
+        class="btn-primary"
+        id="btnLoginAluno"
+        onclick="loginAluno()"
+      >
+        Entrar
+      </button>
+
+
+      <button
+        class="btn-back"
+        onclick="abrirCadastro()"
+      >
+        Criar cadastro
+      </button>
+
+
+      <button
+        class="btn-back"
+        onclick="voltar()"
+      >
+        Voltar
+      </button>
+
+
+      <p id="mensagemLogin"></p>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    var PERFIS_ESCOLARES = [
+      "ALUNO",
+      "PROFESSOR",
+      "FUNCIONARIO"
+    ];
+
+
+    function salvarSessao(
+      resultado
+    ) {
+
+      if (
+        !resultado ||
+        !resultado.sucesso ||
+        !resultado.token ||
+        !resultado.usuario
+      ) {
+
+        throw new Error(
+          "O servidor não retornou uma sessão válida."
+        );
+      }
+
+
+      var token =
+        String(
+          resultado.token
+        ).trim();
+
+
+      var perfil =
+        String(
+          resultado.usuario.perfil ||
+          ""
+        )
+        .trim()
+        .toUpperCase();
+
+
+      if (!token) {
+
+        throw new Error(
+          "Nenhum token foi recebido."
+        );
+      }
+
+
+      if (
+        PERFIS_ESCOLARES.indexOf(
+          perfil
+        ) === -1
+      ) {
+
+        throw new Error(
+          "Perfil escolar inválido."
+        );
+      }
+
+
+      sessionStorage.setItem(
+        "token",
+        token
+      );
+
+
+      sessionStorage.setItem(
+        "perfil",
+        perfil
+      );
+
+
+      sessionStorage.setItem(
+        "nome",
+        resultado.usuario.nome ||
+        "Usuário"
+      );
+
+
+      return token;
+    }
+
+
+    function loginAluno() {
+
+      var email =
+        document
+          .getElementById(
+            "emailAluno"
+          )
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      var senha =
+        document
+          .getElementById(
+            "senhaAluno"
+          )
+          .value;
+
+
+      var perfil =
+        document
+          .getElementById(
+            "perfilAluno"
+          )
+          .value;
+
+
+      var mensagem =
+        document.getElementById(
+          "mensagemLogin"
+        );
+
+
+      var botao =
+        document.getElementById(
+          "btnLoginAluno"
+        );
+
+
+      if (!email) {
+
+        mensagem.textContent =
+          "Digite o seu e-mail.";
+
+        return;
+      }
+
+
+      if (!senha) {
+
+        mensagem.textContent =
+          "Digite a sua senha.";
+
+        return;
+      }
+
+
+      if (
+        PERFIS_ESCOLARES.indexOf(
+          perfil
+        ) === -1
+      ) {
+
+        mensagem.textContent =
+          "Selecione um perfil válido.";
+
+        return;
+      }
+
+
+      mensagem.textContent =
+        "Entrando...";
+
+
+      botao.disabled =
+        true;
+
+
+      sessionStorage.clear();
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(resultado) {
+
+            try {
+
+              salvarSessao(
+                resultado
+              );
+
+
+              carregarPagina(
+                "Aluno"
+              );
+
+            } catch (erro) {
+
+              mensagem.textContent =
+                erro.message;
+
+              botao.disabled =
+                false;
+            }
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            mensagem.textContent =
+              (
+                erro &&
+                erro.message
+              ) ||
+              "E-mail, senha ou perfil inválido.";
+
+            botao.disabled =
+              false;
+          }
+        )
+
+        .login(
+          {
+            email:
+              email,
+
+            senha:
+              senha,
+
+            perfil:
+              perfil
+          }
+        );
+    }
+
+
+    function abrirCadastro() {
+
+      carregarPagina(
+        "Cadastro"
+      );
+    }
+
+
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "A página solicitada não foi encontrada."
+              );
+
+              return;
+            }
+
+
+            document.open();
+
+            document.write(
+              html
+            );
+
+            document.close();
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              (
+                erro &&
+                erro.message
+              ) ||
+              "Erro ao abrir a página."
+            );
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+    }
+
+
+    function voltar() {
+
+      sessionStorage.clear();
+
+      carregarPagina(
+        "Index"
+      );
+    }
+
+  </script>
+
+</body>
+
+</html>
