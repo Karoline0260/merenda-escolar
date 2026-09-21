@@ -1,7 +1,6 @@
 /**
  * ============================================================
  * CALENDARIO.GS
- * Programação semanal e mensal da merenda.
  * ============================================================
  */
 
@@ -33,22 +32,17 @@ function obterIdRefeicaoCalendario(
    * NORMALIZAR HORÁRIO
    * ============================================================
    *
-   * Remove completamente a parte 1899-12-30T quando existir.
+   * Sempre retorna HH:mm.
    *
-   * Exemplos:
+   * Aceita:
    *
    * 15:55
    * 18:45
    * 1899-12-30T15:55:00
-   * 1899-12-30T18:45:00
-   *
-   * Resultado:
-   *
-   * 15:55
-   * 18:45
+   * objetos Date
    * ============================================================
    */
-  function normalizarPeriodoCalendario(
+  function normalizarHorarioRefeicao(
     valor
   ) {
   
@@ -84,39 +78,381 @@ function obterIdRefeicaoCalendario(
     }
   
   
-    var horario =
+    var match =
       texto.match(
-        /(\d{1,2}):(\d{2})(?::\d{2})?/
+        /(?:^|\s)(\d{1,2}):(\d{2})(?::\d{2})?/
       );
   
   
-    if (!horario) {
+    if (!match) {
       return "";
     }
   
   
     var hora =
-      String(
-        horario[1]
-      ).padStart(
-        2,
-        "0"
+      Number(
+        match[1]
       );
   
   
     var minuto =
-      String(
-        horario[2]
-      ).padStart(
-        2,
-        "0"
+      Number(
+        match[2]
       );
   
   
+    if (
+      hora < 0 ||
+      hora > 23 ||
+      minuto < 0 ||
+      minuto > 59
+    ) {
+  
+      return "";
+    }
+  
+  
     return (
-      hora +
+      String(
+        hora
+      ).padStart(
+        2,
+        "0"
+      ) +
       ":" +
-      minuto
+      String(
+        minuto
+      ).padStart(
+        2,
+        "0"
+      )
+    );
+  }
+  
+  
+  /**
+   * ============================================================
+   * CONFIGURAÇÃO DOS DOIS HORÁRIOS
+   * ============================================================
+   *
+   * A configuração fica salva nas propriedades do projeto.
+   *
+   * Valores iniciais:
+   *
+   * 1ª refeição = 15:55
+   * 2ª refeição = 18:45
+   * ============================================================
+   */
+  function obterConfiguracaoHorariosRefeicoes() {
+  
+    var propriedades =
+      PropertiesService
+        .getScriptProperties();
+  
+  
+    var horario1 =
+      normalizarHorarioRefeicao(
+        propriedades.getProperty(
+          "HORARIO_REFEICAO_1"
+        )
+      ) ||
+      "15:55";
+  
+  
+    var horario2 =
+      normalizarHorarioRefeicao(
+        propriedades.getProperty(
+          "HORARIO_REFEICAO_2"
+        )
+      ) ||
+      "18:45";
+  
+  
+    return {
+  
+      horario1:
+        horario1,
+  
+      horario2:
+        horario2,
+  
+      horarios: [
+        horario1,
+        horario2
+      ]
+    };
+  }
+  
+  
+  /**
+   * ============================================================
+   * SALVAR CONFIGURAÇÃO DOS HORÁRIOS
+   * ============================================================
+   */
+  function salvarConfiguracaoHorariosRefeicoes(
+    token,
+    horario1,
+    horario2
+  ) {
+  
+    if (
+      token &&
+      typeof token === "object" &&
+      !Array.isArray(token)
+    ) {
+  
+      var dados =
+        token;
+  
+  
+      horario1 =
+        dados.horario1 ||
+        dados.horarioRefeicao1;
+  
+  
+      horario2 =
+        dados.horario2 ||
+        dados.horarioRefeicao2;
+  
+  
+      token =
+        normalizarToken(
+          dados
+        );
+    }
+  
+  
+    token =
+      normalizarToken(
+        token
+      );
+  
+  
+    verificarPermissao(
+      token,
+      "GESTAO"
+    );
+  
+  
+    horario1 =
+      normalizarHorarioRefeicao(
+        horario1
+      );
+  
+  
+    horario2 =
+      normalizarHorarioRefeicao(
+        horario2
+      );
+  
+  
+    if (
+      !horario1 ||
+      !horario2
+    ) {
+  
+      throw new Error(
+        "Informe os dois horários das refeições."
+      );
+    }
+  
+  
+    if (
+      horario1 ===
+      horario2
+    ) {
+  
+      throw new Error(
+        "Os horários das duas refeições devem ser diferentes."
+      );
+    }
+  
+  
+    var configuracaoAnterior =
+      obterConfiguracaoHorariosRefeicoes();
+  
+  
+    /*
+     * Atualiza registros já cadastrados no calendário.
+     */
+    atualizarHorariosCalendarioExistentes(
+      configuracaoAnterior.horario1,
+      horario1,
+      configuracaoAnterior.horario2,
+      horario2
+    );
+  
+  
+    PropertiesService
+      .getScriptProperties()
+      .setProperties(
+        {
+          HORARIO_REFEICAO_1:
+            horario1,
+  
+          HORARIO_REFEICAO_2:
+            horario2
+        },
+        true
+      );
+  
+  
+    return {
+  
+      sucesso:
+        true,
+  
+      mensagem:
+        "Horários das duas refeições atualizados com sucesso.",
+  
+      configuracao:
+        obterConfiguracaoHorariosRefeicoes()
+    };
+  }
+  
+  
+  /**
+   * ============================================================
+   * ATUALIZAR HORÁRIOS JÁ EXISTENTES
+   * ============================================================
+   */
+  function atualizarHorariosCalendarioExistentes(
+    horarioAntigo1,
+    horarioNovo1,
+    horarioAntigo2,
+    horarioNovo2
+  ) {
+  
+    var calendario =
+      getData(
+        "CALENDARIO"
+      ) || [];
+  
+  
+    calendario.forEach(
+      function(item) {
+  
+        if (
+          !item ||
+          !item.id_calendario
+        ) {
+  
+          return;
+        }
+  
+  
+        var horarioAtual =
+          normalizarHorarioRefeicao(
+            item.horario ||
+            item.periodo
+          );
+  
+  
+        var novoHorario =
+          "";
+  
+  
+        if (
+          horarioAtual ===
+          horarioAntigo1
+        ) {
+  
+          novoHorario =
+            horarioNovo1;
+  
+        } else if (
+          horarioAtual ===
+          horarioAntigo2
+        ) {
+  
+          novoHorario =
+            horarioNovo2;
+        }
+  
+  
+        if (
+          novoHorario &&
+          novoHorario !==
+          horarioAtual
+        ) {
+  
+          /*
+           * Atualiza tanto a coluna horario quanto a coluna
+           * periodo caso elas existam.
+           */
+          try {
+  
+            updateData(
+              "CALENDARIO",
+              "id_calendario",
+              item.id_calendario,
+              {
+                horario:
+                  novoHorario,
+  
+                periodo:
+                  novoHorario
+              }
+            );
+  
+          } catch (erro) {
+  
+            /*
+             * Algumas instalações antigas podem ter somente
+             * a coluna periodo.
+             */
+            updateData(
+              "CALENDARIO",
+              "id_calendario",
+              item.id_calendario,
+              {
+                periodo:
+                  novoHorario
+              }
+            );
+          }
+        }
+      }
+    );
+  }
+  
+  
+  /**
+   * ============================================================
+   * LISTAR CONFIGURAÇÃO
+   * ============================================================
+   */
+  function listarConfiguracaoHorariosRefeicoes(
+    token
+  ) {
+  
+    token =
+      normalizarToken(
+        token
+      );
+  
+  
+    verificarPermissao(
+      token,
+      "GESTAO"
+    );
+  
+  
+    return obterConfiguracaoHorariosRefeicoes();
+  }
+  
+  
+  /**
+   * ============================================================
+   * COMPATIBILIDADE
+   * ============================================================
+   */
+  function normalizarPeriodoCalendario(
+    valor
+  ) {
+  
+    return normalizarHorarioRefeicao(
+      valor
     );
   }
   
@@ -131,29 +467,26 @@ function obterIdRefeicaoCalendario(
   ) {
   
     var horario =
-      normalizarPeriodoCalendario(
+      normalizarHorarioRefeicao(
         periodo
       );
   
   
-    return [
-      "15:55",
-      "18:45"
-    ].indexOf(
-      horario
-    ) !== -1;
+    var configuracao =
+      obterConfiguracaoHorariosRefeicoes();
+  
+  
+    return (
+      configuracao.horarios.indexOf(
+        horario
+      ) !== -1
+    );
   }
   
   
   /**
    * ============================================================
    * NORMALIZAR ABRANGÊNCIA
-   * ============================================================
-   *
-   * Somente:
-   *
-   * SEMANA
-   * MES
    * ============================================================
    */
   function normalizarAbrangenciaCalendario(
@@ -162,33 +495,20 @@ function obterIdRefeicaoCalendario(
   
     var abrangencia =
       String(
-        valor || ""
+        valor ||
+        "DIA"
       )
       .trim()
       .toUpperCase();
   
   
     if (
-      abrangencia === "MÊS"
+      abrangencia ===
+      "MÊS"
     ) {
   
       abrangencia =
         "MES";
-    }
-  
-  
-    if (
-      [
-        "SEMANA",
-        "MES"
-      ].indexOf(
-        abrangencia
-      ) === -1
-    ) {
-  
-      throw new Error(
-        "A programação deve ser SEMANA ou MES."
-      );
     }
   
   
@@ -207,20 +527,24 @@ function obterIdRefeicaoCalendario(
   
     var texto =
       String(
-        valor || ""
+        valor ||
+        ""
       ).trim();
   
   
     var partes =
-      texto.split("-");
+      texto.split(
+        "-"
+      );
   
   
     if (
-      partes.length !== 3
+      partes.length !==
+      3
     ) {
   
       throw new Error(
-        "Data inválida."
+        "Data inválida. Utilize o formato correto."
       );
     }
   
@@ -264,23 +588,18 @@ function obterIdRefeicaoCalendario(
   
   
     if (
-      data.getFullYear() !== ano ||
-      data.getMonth() !== mes - 1 ||
-      data.getDate() !== dia
+      data.getFullYear() !==
+      ano ||
+      data.getMonth() !==
+      mes - 1 ||
+      data.getDate() !==
+      dia
     ) {
   
       throw new Error(
         "A data informada não é válida."
       );
     }
-  
-  
-    data.setHours(
-      0,
-      0,
-      0,
-      0
-    );
   
   
     return data;
@@ -300,18 +619,14 @@ function obterIdRefeicaoCalendario(
       String(
         data.getFullYear()
       ) +
-  
       "-" +
-  
       String(
         data.getMonth() + 1
       ).padStart(
         2,
         "0"
       ) +
-  
       "-" +
-  
       String(
         data.getDate()
       ).padStart(
@@ -324,149 +639,7 @@ function obterIdRefeicaoCalendario(
   
   /**
    * ============================================================
-   * OBTER LIMITES DO PERÍODO
-   * ============================================================
-   *
-   * SEMANA:
-   * segunda até domingo.
-   *
-   * MES:
-   * primeiro até último dia do mês.
-   * ============================================================
-   */
-  function obterPeriodoCalendario(
-    dataInicial,
-    abrangencia
-  ) {
-  
-    var inicio =
-      new Date(
-        dataInicial.getTime()
-      );
-  
-  
-    inicio.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-  
-  
-    var fim;
-  
-  
-    if (
-      abrangencia === "SEMANA"
-    ) {
-  
-      var diaSemana =
-        inicio.getDay();
-  
-  
-      /*
-       * JavaScript:
-       *
-       * domingo = 0
-       * segunda = 1
-       * ...
-       * sábado = 6
-       *
-       * Ajustar para segunda-feira.
-       */
-      var distanciaSegunda =
-        diaSemana === 0
-          ? 6
-          : diaSemana - 1;
-  
-  
-      inicio.setDate(
-        inicio.getDate() -
-        distanciaSegunda
-      );
-  
-  
-      fim =
-        new Date(
-          inicio.getTime()
-        );
-  
-  
-      fim.setDate(
-        inicio.getDate() + 6
-      );
-    }
-  
-  
-    else if (
-      abrangencia === "MES"
-    ) {
-  
-      inicio =
-        new Date(
-          inicio.getFullYear(),
-          inicio.getMonth(),
-          1
-        );
-  
-  
-      fim =
-        new Date(
-          inicio.getFullYear(),
-          inicio.getMonth() + 1,
-          0
-        );
-    }
-  
-  
-    else {
-  
-      throw new Error(
-        "Abrangência inválida."
-      );
-    }
-  
-  
-    inicio.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-  
-  
-    fim.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-  
-  
-    return {
-  
-      inicio:
-        inicio,
-  
-      fim:
-        fim,
-  
-      dataInicial:
-        formatarDataCalendario(
-          inicio
-        ),
-  
-      dataFinal:
-        formatarDataCalendario(
-          fim
-        )
-    };
-  }
-  
-  
-  /**
-   * ============================================================
-   * GERAR DATAS DO PERÍODO
+   * GERAR DATAS
    * ============================================================
    */
   function gerarDatasCalendario(
@@ -474,78 +647,111 @@ function obterIdRefeicaoCalendario(
     abrangencia
   ) {
   
-    var periodo =
-      obterPeriodoCalendario(
-        dataInicial,
-        abrangencia
-      );
-  
-  
     var datas = [];
   
   
-    var atual =
+    var data =
       new Date(
-        periodo.inicio.getTime()
+        dataInicial.getTime()
       );
   
   
-    while (
-      atual.getTime() <=
-      periodo.fim.getTime()
+    if (
+      abrangencia ===
+      "DIA"
     ) {
   
       datas.push(
         formatarDataCalendario(
-          atual
+          data
         )
       );
   
   
-      atual.setDate(
-        atual.getDate() + 1
-      );
+      return datas;
     }
   
   
-    return datas;
-  }
+    if (
+      abrangencia ===
+      "SEMANA"
+    ) {
+  
+      for (
+        var i = 0;
+        i < 7;
+        i++
+      ) {
+  
+        var dataSemana =
+          new Date(
+            data.getTime()
+          );
   
   
-  /**
-   * ============================================================
-   * VERIFICAR SE DATA PERTENCE AO PERÍODO
-   * ============================================================
-   */
-  function dataPertenceAoPeriodo(
-    data,
-    periodo
-  ) {
-  
-    var dataObjeto =
-      criarDataCalendario(
-        data
-      );
+        dataSemana.setDate(
+          data.getDate() +
+          i
+        );
   
   
-    var inicio =
-      criarDataCalendario(
-        periodo.dataInicial
-      );
+        datas.push(
+          formatarDataCalendario(
+            dataSemana
+          )
+        );
+      }
   
   
-    var fim =
-      criarDataCalendario(
-        periodo.dataFinal
-      );
+      return datas;
+    }
   
   
-    return (
-      dataObjeto.getTime() >=
-      inicio.getTime() &&
+    if (
+      abrangencia ===
+      "MES"
+    ) {
   
-      dataObjeto.getTime() <=
-      fim.getTime()
+      var primeiroDia =
+        new Date(
+          data.getFullYear(),
+          data.getMonth(),
+          1
+        );
+  
+  
+      var ultimoDia =
+        new Date(
+          data.getFullYear(),
+          data.getMonth() + 1,
+          0
+        );
+  
+  
+      for (
+        var dia = primeiroDia;
+        dia <= ultimoDia;
+        dia.setDate(
+          dia.getDate() + 1
+        )
+      ) {
+  
+        datas.push(
+          formatarDataCalendario(
+            new Date(
+              dia.getTime()
+            )
+          )
+        );
+      }
+  
+  
+      return datas;
+    }
+  
+  
+    throw new Error(
+      "Tipo de cadastro inválido. Utilize DIA, SEMANA ou MES."
     );
   }
   
@@ -557,40 +763,47 @@ function obterIdRefeicaoCalendario(
    */
   function buscarNomeRefeicaoCalendario(
     idRefeicao,
-    produtos
+    refeicoes
   ) {
   
-    if (!idRefeicao) {
+    if (
+      !idRefeicao
+    ) {
+  
       return "";
     }
   
   
     for (
       var i = 0;
-      i < produtos.length;
+      i < refeicoes.length;
       i++
     ) {
   
-      var produto =
-        produtos[i];
+      var refeicao =
+        refeicoes[i];
   
   
-      if (!produto) {
+      if (!refeicao) {
         continue;
       }
   
   
       if (
         String(
-          produto.id_produto || ""
-        ).trim() ===
+          refeicao.id_refeicao ||
+          ""
+        )
+        .trim() ===
         String(
           idRefeicao
-        ).trim()
+        )
+        .trim()
       ) {
   
         return String(
-          produto.nome || ""
+          refeicao.nome ||
+          ""
         ).trim();
       }
     }
@@ -614,7 +827,8 @@ function obterIdRefeicaoCalendario(
   
   
     if (
-      ultimaColuna < 1
+      ultimaColuna <
+      1
     ) {
   
       throw new Error(
@@ -642,7 +856,8 @@ function obterIdRefeicaoCalendario(
   
       if (
         String(
-          cabecalhos[i] || ""
+          cabecalhos[i] ||
+          ""
         )
         .trim()
         .toLowerCase() ===
@@ -667,32 +882,12 @@ function obterIdRefeicaoCalendario(
   
   /**
    * ============================================================
-   * CADASTRAR PROGRAMAÇÃO SEMANAL/MENSAL
-   * ============================================================
-   *
-   * Recebe:
-   *
-   * {
-   *   token: "...",
-   *   abrangencia: "SEMANA" | "MES",
-   *   dataReferencia: "yyyy-MM-dd",
-   *   registros: [
-   *     {
-   *       data: "yyyy-MM-dd",
-   *       id_refeicao: "...",
-   *       periodo: "15:55",
-   *       cardapio: "...",
-   *       observacao: "..."
-   *     }
-   *   ]
-   * }
-   *
-   * Permite várias refeições no mesmo dia.
+   * CADASTRAR NO CALENDÁRIO
    * ============================================================
    */
-  function cadastrarCalendariosPeriodo(
+  function cadastrarCalendario(
     token,
-    dados
+    calendario
   ) {
   
     if (
@@ -701,8 +896,14 @@ function obterIdRefeicaoCalendario(
       !Array.isArray(token)
     ) {
   
-      dados =
+      var dados =
         token;
+  
+  
+      calendario =
+        dados.calendario ||
+        dados.dados ||
+        {};
   
   
       token =
@@ -725,241 +926,241 @@ function obterIdRefeicaoCalendario(
   
   
     if (
-      !dados ||
-      typeof dados !== "object" ||
-      Array.isArray(dados)
+      !calendario ||
+      typeof calendario !==
+      "object" ||
+      Array.isArray(calendario)
     ) {
   
       throw new Error(
-        "Dados da programação não informados."
+        "Os dados do calendário não foram informados."
+      );
+    }
+  
+  
+    var data =
+      String(
+        calendario.data ||
+        ""
+      ).trim();
+  
+  
+    if (!data) {
+  
+      throw new Error(
+        "A data é obrigatória."
+      );
+    }
+  
+  
+    var idRefeicao =
+      calendario.id_refeicao ||
+      calendario["id refeicao"] ||
+      "";
+  
+  
+    idRefeicao =
+      String(
+        idRefeicao
+      ).trim();
+  
+  
+    /*
+     * O horário vem do formulário, mas somente poderá ser
+     * um dos dois horários configurados pela Gestão.
+     */
+    var periodo =
+      normalizarHorarioRefeicao(
+        calendario.horario ||
+        calendario.periodo
+      );
+  
+  
+    var configuracao =
+      obterConfiguracaoHorariosRefeicoes();
+  
+  
+    if (
+      configuracao.horarios.indexOf(
+        periodo
+      ) === -1
+    ) {
+  
+      throw new Error(
+        "Selecione um dos dois horários configurados pela Gestão."
       );
     }
   
   
     var abrangencia =
       normalizarAbrangenciaCalendario(
-        dados.abrangencia
+        calendario.abrangencia
       );
   
   
-    var dataReferencia =
-      dados.dataReferencia ||
-      dados.data ||
-      "";
+    var cardapio =
+      String(
+        calendario.cardapio ||
+        ""
+      ).trim();
   
   
-    if (
-      !String(
-        dataReferencia
-      ).trim()
-    ) {
-  
-      throw new Error(
-        "A data de referência é obrigatória."
-      );
-    }
-  
-  
-    var dataBase =
-      criarDataCalendario(
-        dataReferencia
-      );
-  
-  
-    var periodoCalendario =
-      obterPeriodoCalendario(
-        dataBase,
-        abrangencia
-      );
-  
-  
-    var registros =
-      dados.registros;
-  
-  
-    if (
-      !Array.isArray(
-        registros
-      ) ||
-      registros.length === 0
-    ) {
-  
-      throw new Error(
-        "Adicione pelo menos uma refeição ao período."
-      );
-    }
-  
-  
-    var produtos =
-      getData(
-        "PRODUTOS"
-      ) || [];
-  
-  
-    var registrosValidados = [];
+    var observacao =
+      String(
+        calendario.observacao ||
+        ""
+      ).trim();
   
   
     /*
-     * ==========================================================
-     * VALIDAR TUDO ANTES DE SALVAR
-     * ==========================================================
+     * O cadastro atual permite o cardápio como campo opcional
+     * para manter compatibilidade com instalações existentes.
      */
-    for (
-      var i = 0;
-      i < registros.length;
-      i++
+    if (!idRefeicao) {
+  
+      throw new Error(
+        "Selecione uma refeição."
+      );
+    }
+  
+  
+    if (
+      [
+        "DIA",
+        "SEMANA",
+        "MES"
+      ]
+      .indexOf(
+        abrangencia
+      ) === -1
     ) {
   
-      var registro =
-        registros[i];
+      throw new Error(
+        "A abrangência deve ser DIA, SEMANA ou MES."
+      );
+    }
   
   
-      if (
-        !registro ||
-        typeof registro !== "object"
-      ) {
-  
-        throw new Error(
-          "Existe uma programação inválida."
-        );
-      }
+    var refeicoes =
+      getData(
+        "REFEICOES"
+      ) || [];
   
   
-      var data =
-        String(
-          registro.data || ""
-        ).trim();
+    var refeicaoExiste =
+      refeicoes.some(
+        function(item) {
+  
+          return (
+            item &&
+            String(
+              item.id_refeicao ||
+              ""
+            ).trim() ===
+            idRefeicao
+          );
+        }
+      );
   
   
-      var idRefeicao =
-        String(
-          registro.id_refeicao ||
-          ""
-        ).trim();
+    if (
+      !refeicaoExiste
+    ) {
+  
+      throw new Error(
+        "A refeição selecionada não foi encontrada."
+      );
+    }
   
   
-      var periodo =
-        normalizarPeriodoCalendario(
-          registro.periodo
-        );
-  
-  
-      var cardapio =
-        String(
-          registro.cardapio || ""
-        ).trim();
-  
-  
-      var observacao =
-        String(
-          registro.observacao || ""
-        ).trim();
-  
-  
-      if (!data) {
-  
-        throw new Error(
-          "Todas as programações precisam ter uma data."
-        );
-      }
-  
-  
+    /*
+     * O intervalo de datas.
+     */
+    var dataInicial =
       criarDataCalendario(
         data
       );
   
   
-      if (
-        !dataPertenceAoPeriodo(
-          data,
-          periodoCalendario
-        )
-      ) {
-  
-        throw new Error(
-          "A data " +
-          data +
-          " não pertence ao período selecionado."
-        );
-      }
+    var datas =
+      gerarDatasCalendario(
+        dataInicial,
+        abrangencia
+      );
   
   
-      if (!idRefeicao) {
-  
-        throw new Error(
-          "Todas as programações precisam ter uma refeição."
-        );
-      }
+    var registrosCriados =
+      [];
   
   
-      if (
-        !horarioCalendarioValido(
-          periodo
-        )
-      ) {
-  
-        throw new Error(
-          "Todos os horários devem ser 15:55 ou 18:45."
-        );
-      }
+    /*
+     * Verificar duplicidade por data + horário.
+     */
+    var calendarioExistente =
+      getData(
+        "CALENDARIO"
+      ) || [];
   
   
-      if (!cardapio) {
+    for (
+      var i = 0;
+      i < datas.length;
+      i++
+    ) {
   
-        throw new Error(
-          "Todos os registros precisam possuir um cardápio."
-        );
-      }
+      var dataAtual =
+        datas[i];
   
   
-      var refeicaoExiste =
-        produtos.some(
-          function(produto) {
+      var duplicado =
+        calendarioExistente.some(
+          function(item) {
+  
+            if (!item) {
+              return false;
+            }
+  
+  
+            var dataItem =
+              String(
+                item.data ||
+                ""
+              ).trim();
+  
+  
+            var horarioItem =
+              normalizarHorarioRefeicao(
+                item.horario ||
+                item.periodo
+              );
+  
   
             return (
-              produto &&
-              String(
-                produto.id_produto || ""
-              ).trim() ===
-              idRefeicao
+              dataItem ===
+              dataAtual &&
+  
+              horarioItem ===
+              periodo
             );
           }
         );
   
   
-      if (!refeicaoExiste) {
+      if (
+        duplicado
+      ) {
   
         throw new Error(
-          "Uma das refeições selecionadas não existe."
+          "Já existe uma refeição cadastrada para " +
+          dataAtual +
+          " às " +
+          periodo +
+          "."
         );
       }
-  
-  
-      registrosValidados.push({
-  
-        data:
-          data,
-  
-        id_refeicao:
-          idRefeicao,
-  
-        periodo:
-          periodo,
-  
-        cardapio:
-          cardapio,
-  
-        observacao:
-          observacao
-      });
     }
   
   
-    /*
-     * ==========================================================
-     * GARANTIR COLUNA CARDAPIO
-     * ==========================================================
-     */
     var aba =
       getSheet(
         "CALENDARIO"
@@ -971,52 +1172,49 @@ function obterIdRefeicaoCalendario(
     );
   
   
-    /*
-     * ==========================================================
-     * SALVAR
-     * ==========================================================
-     */
-    var registrosCriados = [];
+    for (
+      var j = 0;
+      j < datas.length;
+      j++
+    ) {
+  
+      var novoRegistro = {
+  
+        id_calendario:
+          gerarId(
+            "CAL"
+          ),
+  
+        data:
+          datas[j],
+  
+        periodo:
+          periodo,
+  
+        horario:
+          periodo,
+  
+        id_refeicao:
+          idRefeicao,
+  
+        cardapio:
+          cardapio,
+  
+        observacao:
+          observacao
+      };
   
   
-    registrosValidados.forEach(
-      function(registro) {
-  
-        var novoRegistro = {
-  
-          id_calendario:
-            gerarId(
-              "CAL"
-            ),
-  
-          data:
-            registro.data,
-  
-          periodo:
-            registro.periodo,
-  
-          id_refeicao:
-            registro.id_refeicao,
-  
-          cardapio:
-            registro.cardapio,
-  
-          observacao:
-            registro.observacao
-        };
+      insertData(
+        "CALENDARIO",
+        novoRegistro
+      );
   
   
-        insertData(
-          "CALENDARIO",
-          novoRegistro
-        );
-  
-  
-        registrosCriados.push(
-          novoRegistro
-        );
-      }
-    );
+      registrosCriados.push(
+        novoRegistro
+      );
+    }
   
   
     return {
@@ -1024,103 +1222,99 @@ function obterIdRefeicaoCalendario(
       sucesso:
         true,
   
-      quantidade:
-        registrosCriados.length,
+      mensagem:
+        (
+          abrangencia ===
+          "DIA"
   
-      abrangencia:
-        abrangencia,
+            ? "Cardápio adicionado ao calendário com sucesso."
   
-      dataInicial:
-        periodoCalendario.dataInicial,
+            : "Cardápio cadastrado para " +
+              registrosCriados.length +
+              " dia(s) com sucesso."
+        ),
   
-      dataFinal:
-        periodoCalendario.dataFinal,
+      calendario:
+        registrosCriados[0],
   
       registrosCriados:
         registrosCriados,
   
-      mensagem:
-        registrosCriados.length +
-        (
-          registrosCriados.length === 1
-            ? " refeição foi adicionada ao calendário."
-            : " refeições foram adicionadas ao calendário."
-        )
+      quantidade:
+        registrosCriados.length
     };
   }
   
   
   /**
    * ============================================================
-   * COMPATIBILIDADE COM FUNÇÃO ANTIGA
-   * ============================================================
-   *
-   * Mantida para evitar quebra de outras chamadas.
-   *
-   * Agora somente SEMANA/MES são aceitos.
+   * DIA DA SEMANA
    * ============================================================
    */
-  function cadastrarCalendario(
-    token,
-    calendario
+  function obterDiaSemanaCalendario(
+    dataTexto
   ) {
   
+    var texto =
+      String(
+        dataTexto ||
+        ""
+      ).trim();
+  
+  
+    var partes =
+      texto.split(
+        "-"
+      );
+  
+  
     if (
-      token &&
-      typeof token === "object" &&
-      !Array.isArray(token)
+      partes.length !==
+      3
     ) {
   
-      var dados =
-        token;
-  
-  
-      calendario =
-        dados.calendario ||
-        dados.dados ||
-        dados;
-  
-  
-      token =
-        normalizarToken(
-          dados
-        );
+      return "";
     }
   
   
-    return cadastrarCalendariosPeriodo(
-      token,
-      {
+    var data =
+      new Date(
+        Number(
+          partes[0]
+        ),
+        Number(
+          partes[1]
+        ) - 1,
+        Number(
+          partes[2]
+        )
+      );
   
-        abrangencia:
-          calendario.abrangencia,
   
-        dataReferencia:
-          calendario.dataReferencia ||
-          calendario.data,
+    var dias = [
   
-        registros: [
+      "Domingo",
   
-          {
+      "Segunda-feira",
   
-            data:
-              calendario.data,
+      "Terça-feira",
   
-            id_refeicao:
-              calendario.id_refeicao ||
-              calendario["id refeicao"],
+      "Quarta-feira",
   
-            periodo:
-              calendario.periodo,
+      "Quinta-feira",
   
-            cardapio:
-              calendario.cardapio,
+      "Sexta-feira",
   
-            observacao:
-              calendario.observacao
-          }
-        ]
-      }
+      "Sábado"
+  
+    ];
+  
+  
+    return (
+      dias[
+        data.getDay()
+      ] ||
+      ""
     );
   }
   
@@ -1131,7 +1325,8 @@ function obterIdRefeicaoCalendario(
    * ============================================================
    */
   function listarCalendario(
-    token
+    token,
+    filtro
   ) {
   
     token =
@@ -1140,35 +1335,10 @@ function obterIdRefeicaoCalendario(
       );
   
   
-    var usuario =
-      validarSessao(
-        token
-      );
-  
-  
-    var perfil =
-      String(
-        usuario.perfil || ""
-      )
-      .trim()
-      .toUpperCase();
-  
-  
-    if (
-      [
-        "ALUNO",
-        "PROFESSOR",
-        "FUNCIONARIO",
-        "GESTAO"
-      ].indexOf(
-        perfil
-      ) === -1
-    ) {
-  
-      throw new Error(
-        "ACESSO NEGADO. Perfil não autorizado."
-      );
-    }
+    verificarPermissao(
+      token,
+      "GESTAO"
+    );
   
   
     var calendario =
@@ -1177,9 +1347,9 @@ function obterIdRefeicaoCalendario(
       ) || [];
   
   
-    var produtos =
+    var refeicoes =
       getData(
-        "PRODUTOS"
+        "REFEICOES"
       ) || [];
   
   
@@ -1193,6 +1363,20 @@ function obterIdRefeicaoCalendario(
             );
   
   
+          var nomeRefeicao =
+            buscarNomeRefeicaoCalendario(
+              idRefeicao,
+              refeicoes
+            );
+  
+  
+          var horario =
+            normalizarHorarioRefeicao(
+              item.horario ||
+              item.periodo
+            );
+  
+  
           return {
   
             id_calendario:
@@ -1203,19 +1387,22 @@ function obterIdRefeicaoCalendario(
               item.data ||
               "",
   
-            periodo:
-              normalizarPeriodoCalendario(
-                item.periodo
+            dia_semana:
+              obterDiaSemanaCalendario(
+                item.data
               ),
+  
+            horario:
+              horario,
+  
+            periodo:
+              horario,
   
             id_refeicao:
               idRefeicao,
   
             refeicao:
-              buscarNomeRefeicaoCalendario(
-                idRefeicao,
-                produtos
-              ),
+              nomeRefeicao,
   
             cardapio:
               item.cardapio ||
@@ -1229,55 +1416,378 @@ function obterIdRefeicaoCalendario(
       );
   
   
-    /*
-     * Ordenar por data e horário.
-     */
     resultado.sort(
       function(a, b) {
   
         var dataA =
           String(
-            a.data || ""
+            a.data ||
+            ""
+          ) +
+          " " +
+          String(
+            a.horario ||
+            ""
           );
   
   
         var dataB =
           String(
-            b.data || ""
-          );
-  
-  
-        if (
-          dataA < dataB
-        ) {
-  
-          return -1;
-        }
-  
-  
-        if (
-          dataA > dataB
-        ) {
-  
-          return 1;
-        }
-  
-  
-        var periodoA =
+            b.data ||
+            ""
+          ) +
+          " " +
           String(
-            a.periodo || ""
-          );
-  
-  
-        var periodoB =
-          String(
-            b.periodo || ""
+            b.horario ||
+            ""
           );
   
   
         return (
-          periodoA.localeCompare(
-            periodoB
+          dataA.localeCompare(
+            dataB
+          )
+        );
+      }
+    );
+  
+  
+    /*
+     * Filtro da semana.
+     */
+    if (
+      filtro &&
+      typeof filtro ===
+      "object" &&
+      filtro.semana
+    ) {
+  
+      var hoje =
+        new Date();
+  
+  
+      hoje.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+  
+  
+      var inicioSemana =
+        new Date(
+          hoje.getTime()
+        );
+  
+  
+      inicioSemana.setDate(
+        hoje.getDate() -
+        hoje.getDay()
+      );
+  
+  
+      var fimSemana =
+        new Date(
+          inicioSemana.getTime()
+        );
+  
+  
+      fimSemana.setDate(
+        inicioSemana.getDate() +
+        6
+      );
+  
+  
+      resultado =
+        resultado.filter(
+          function(item) {
+  
+            var partes =
+              String(
+                item.data ||
+                ""
+              ).split(
+                "-"
+              );
+  
+  
+            if (
+              partes.length !==
+              3
+            ) {
+  
+              return false;
+            }
+  
+  
+            var dataItem =
+              new Date(
+                Number(
+                  partes[0]
+                ),
+                Number(
+                  partes[1]
+                ) - 1,
+                Number(
+                  partes[2]
+                )
+              );
+  
+  
+            dataItem.setHours(
+              0,
+              0,
+              0,
+              0
+            );
+  
+  
+            return (
+              dataItem >=
+              inicioSemana &&
+              dataItem <=
+              fimSemana
+            );
+          }
+        );
+    }
+  
+  
+    return resultado;
+  }
+  
+  
+  /**
+   * ============================================================
+   * CARDÁPIO PÚBLICO
+   * ============================================================
+   *
+   * Não exige login.
+   *
+   * Mostra somente a semana atual.
+   * ============================================================
+   */
+  function listarCardapioPublico() {
+  
+    var calendario =
+      getData(
+        "CALENDARIO"
+      ) || [];
+  
+  
+    var refeicoes =
+      getData(
+        "REFEICOES"
+      ) || [];
+  
+  
+    var hoje =
+      new Date();
+  
+  
+    hoje.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+  
+  
+    var inicioSemana =
+      new Date(
+        hoje.getTime()
+      );
+  
+  
+    inicioSemana.setDate(
+      hoje.getDate() -
+      hoje.getDay()
+    );
+  
+  
+    inicioSemana.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+  
+  
+    var fimSemana =
+      new Date(
+        inicioSemana.getTime()
+      );
+  
+  
+    fimSemana.setDate(
+      inicioSemana.getDate() +
+      6
+    );
+  
+  
+    fimSemana.setHours(
+      23,
+      59,
+      59,
+      999
+    );
+  
+  
+    var resultado =
+      [];
+  
+  
+    calendario.forEach(
+      function(item) {
+  
+        if (
+          !item ||
+          !item.data
+        ) {
+  
+          return;
+        }
+  
+  
+        var partes =
+          String(
+            item.data
+          ).split(
+            "-"
+          );
+  
+  
+        if (
+          partes.length !==
+          3
+        ) {
+  
+          return;
+        }
+  
+  
+        var dataRegistro =
+          new Date(
+            Number(
+              partes[0]
+            ),
+            Number(
+              partes[1]
+            ) - 1,
+            Number(
+              partes[2]
+            )
+          );
+  
+  
+        dataRegistro.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+  
+  
+        if (
+          dataRegistro <
+          inicioSemana ||
+          dataRegistro >
+          fimSemana
+        ) {
+  
+          return;
+        }
+  
+  
+        var idRefeicao =
+          obterIdRefeicaoCalendario(
+            item
+          );
+  
+  
+        var nomeRefeicao =
+          buscarNomeRefeicaoCalendario(
+            idRefeicao,
+            refeicoes
+          );
+  
+  
+        var horario =
+          normalizarHorarioRefeicao(
+            item.horario ||
+            item.periodo
+          );
+  
+  
+        resultado.push({
+  
+          id_calendario:
+            item.id_calendario ||
+            "",
+  
+          data:
+            item.data ||
+            "",
+  
+          dia_semana:
+            obterDiaSemanaCalendario(
+              item.data
+            ),
+  
+          horario:
+            horario,
+  
+          periodo:
+            horario,
+  
+          id_refeicao:
+            idRefeicao,
+  
+          refeicao:
+            nomeRefeicao,
+  
+          cardapio:
+            item.cardapio ||
+            "",
+  
+          observacao:
+            item.observacao ||
+            ""
+        });
+      }
+    );
+  
+  
+    resultado.sort(
+      function(a, b) {
+  
+        var dataA =
+          String(
+            a.data ||
+            ""
+          ) +
+          " " +
+          String(
+            a.horario ||
+            ""
+          );
+  
+  
+        var dataB =
+          String(
+            b.data ||
+            ""
+          ) +
+          " " +
+          String(
+            b.horario ||
+            ""
+          );
+  
+  
+        return (
+          dataA.localeCompare(
+            dataB
           )
         );
       }
@@ -1290,7 +1800,7 @@ function obterIdRefeicaoCalendario(
   
   /**
    * ============================================================
-   * EXCLUIR UM REGISTRO
+   * EXCLUIR CALENDÁRIO
    * ============================================================
    */
   function excluirCalendario(
@@ -1332,10 +1842,44 @@ function obterIdRefeicaoCalendario(
     );
   
   
-    if (!idCalendario) {
+    if (
+      !idCalendario
+    ) {
   
       throw new Error(
         "ID do calendário não informado."
+      );
+    }
+  
+  
+    var calendario =
+      getData(
+        "CALENDARIO"
+      ) || [];
+  
+  
+    var existe =
+      calendario.some(
+        function(item) {
+  
+          return (
+            item &&
+            String(
+              item.id_calendario ||
+              ""
+            ) ===
+            String(
+              idCalendario
+            )
+          );
+        }
+      );
+  
+  
+    if (!existe) {
+  
+      throw new Error(
+        "Registro de calendário não encontrado."
       );
     }
   
@@ -1353,82 +1897,6 @@ function obterIdRefeicaoCalendario(
         true,
   
       mensagem:
-        "Registro do calendário excluído com sucesso."
-    };
-  }
-  
-  
-  /**
-   * ============================================================
-   * LIMPAR TODO O CALENDÁRIO
-   * ============================================================
-   */
-  function excluirTodosCalendario(
-    token
-  ) {
-  
-    token =
-      normalizarToken(token);
-  
-  
-    verificarPermissao(
-      token,
-      "GESTAO"
-    );
-  
-  
-    var aba =
-      getSheet(
-        "CALENDARIO"
-      );
-  
-  
-    var ultimaLinha =
-      aba.getLastRow();
-  
-  
-    if (
-      ultimaLinha < 2
-    ) {
-  
-      return {
-  
-        sucesso:
-          true,
-  
-        quantidade:
-          0,
-  
-        mensagem:
-          "Não existem registros para limpar."
-      };
-    }
-  
-  
-    var quantidade =
-      ultimaLinha - 1;
-  
-  
-    aba.deleteRows(
-      2,
-      quantidade
-    );
-  
-  
-    return {
-  
-      sucesso:
-        true,
-  
-      quantidade:
-        quantidade,
-  
-      mensagem:
-        quantidade +
-        (
-          quantidade === 1
-            ? " registro foi removido."
-            : " registros foram removidos."
-        )
+        "Registro de calendário excluído com sucesso."
     };
   }
