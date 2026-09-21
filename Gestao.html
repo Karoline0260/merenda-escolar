@@ -18,675 +18,965 @@
 
 <body>
 
-  <div class="app">
+<div class="app">
+
+  <header class="app-header">
+
+    <div>
+
+      <h1>
+        👩‍💼 Área da Gestão
+      </h1>
+
+      <p id="nomeGestao">
+        Verificando sessão...
+      </p>
+
+    </div>
+
+    <button
+      class="btn-logout"
+      onclick="sair()"
+    >
+      Sair
+    </button>
+
+  </header>
 
 
-    <!-- =====================================================
-         CABEÇALHO
-         ===================================================== -->
+  <main class="main-content">
 
-    <header class="app-header">
 
-      <div>
+    <!-- ======================================================
+         HORÁRIOS
+         ====================================================== -->
 
-        <h1>
-          👩‍💼 Área da Gestão
-        </h1>
+    <section class="card schedule-card">
 
-        <p id="nomeGestao">
-          Verificando sessão...
-        </p>
+      <div class="section-header">
+
+        <div>
+
+          <h2>
+            Horários das refeições
+          </h2>
+
+          <p class="subtitle">
+            Configure os dois horários fixos usados pelo calendário.
+          </p>
+
+        </div>
 
       </div>
 
 
-      <button
-        class="btn-logout"
-        onclick="sairGestao()"
-      >
-        Sair
-      </button>
+      <div class="form-grid">
 
-    </header>
+        <div>
 
-
-    <main class="main-content">
-
-
-      <!-- =====================================================
-           REFEIÇÕES DO DIA
-           ===================================================== -->
-
-      <section class="card">
-
-        <div class="section-header">
-
-          <div>
-
-            <h2>
-              Refeições
-            </h2>
-
-            <p class="subtitle">
-              Cadastre as refeições que poderão ser usadas na programação.
-            </p>
-
-          </div>
-
-
-          <button
-            class="btn-danger btn-small"
-            onclick="limparTodasRefeicoes()"
-          >
-            Limpar todas
-          </button>
-
-        </div>
-
-
-        <div class="form-grid">
-
-          <input
-            type="hidden"
-            id="idProduto"
+          <label
+            for="horarioRefeicao1"
           >
 
+            <strong>
+              1ª refeição
+            </strong>
+
+          </label>
 
           <input
-            type="text"
-            id="nomeProduto"
-            placeholder="Nome da refeição"
-          >
-
-
-          <input
-            type="text"
-            id="descricaoProduto"
-            placeholder="Descrição"
+            id="horarioRefeicao1"
+            type="time"
           >
 
         </div>
 
 
-        <div class="button-row">
+        <div>
 
-          <button
-            class="btn-secondary"
-            onclick="salvarProduto()"
+          <label
+            for="horarioRefeicao2"
           >
-            Salvar Refeição
-          </button>
 
+            <strong>
+              2ª refeição
+            </strong>
 
-          <button
-            class="btn-back"
-            onclick="limparFormularioProduto()"
+          </label>
+
+          <input
+            id="horarioRefeicao2"
+            type="time"
           >
-            Limpar
-          </button>
 
         </div>
 
-
-        <p id="mensagemProduto"></p>
-
-      </section>
+      </div>
 
 
-      <!-- =====================================================
-           LISTA DE REFEIÇÕES
-           ===================================================== -->
+      <div class="button-row">
 
-      <section class="card">
+        <button
+          class="btn-secondary"
+          onclick="salvarHorariosRefeicoes()"
+        >
+          Salvar horários
+        </button>
 
-        <div class="section-header">
+      </div>
+
+
+      <p
+        id="mensagemHorarios"
+        class="feedback"
+      ></p>
+
+    </section>
+
+
+    <!-- ======================================================
+         COMIDAS
+         ====================================================== -->
+
+    <section class="card">
+
+      <div class="section-header">
+
+        <div>
 
           <h2>
-            Refeições cadastradas
+            Comidas
           </h2>
 
-
-          <button
-            class="btn-small"
-            onclick="carregarProdutos()"
-          >
-            Atualizar
-          </button>
+          <p class="subtitle">
+            Cadastre as comidas disponíveis para montar as refeições.
+          </p>
 
         </div>
 
+      </div>
 
-        <div
-          id="listaProdutos"
-          class="table-container"
+
+      <div class="form-grid">
+
+        <input
+          id="comidaNome"
+          type="text"
+          placeholder="Nome da comida"
         >
-          Verificando sessão...
+
+
+        <input
+          id="comidaDescricao"
+          type="text"
+          placeholder="Descrição"
+        >
+
+      </div>
+
+
+      <div class="button-row">
+
+        <button
+          class="btn-primary"
+          onclick="cadastrarComida()"
+        >
+          Cadastrar comida
+        </button>
+
+      </div>
+
+
+      <p
+        id="mensagemComida"
+        class="feedback"
+      ></p>
+
+
+      <div
+        id="listaComidas"
+        class="table-container"
+      >
+        Carregando...
+      </div>
+
+    </section>
+
+
+    <!-- ======================================================
+         REFEIÇÕES
+         ====================================================== -->
+
+    <section class="card">
+
+      <div class="section-header">
+
+        <div>
+
+          <h2>
+            Refeições
+          </h2>
+
+          <p class="subtitle">
+            Monte uma refeição escolhendo as comidas cadastradas.
+          </p>
+
         </div>
 
-      </section>
+      </div>
 
 
-      <!-- =====================================================
-           PROGRAMAR SEMANA / MÊS
-           ===================================================== -->
+      <div class="form-grid">
 
-      <section class="card">
-
-        <h2>
-          Adicionar cardápio ao calendário
-        </h2>
+        <input
+          id="refeicaoNome"
+          type="text"
+          placeholder="Nome da refeição"
+        >
 
 
-        <p class="subtitle">
-          Cadastre uma programação completa para a semana ou para o mês.
-          É possível adicionar várias refeições diferentes para o mesmo dia.
-        </p>
+        <input
+          id="refeicaoDescricao"
+          type="text"
+          placeholder="Descrição"
+        >
 
 
-        <div class="form-grid">
+        <div class="full">
+
+          <label>
+
+            <strong>
+              Comidas da refeição
+            </strong>
+
+          </label>
+
 
           <select
-            id="abrangenciaCalendario"
-          >
-
-            <option value="SEMANA">
-              Semana
-            </option>
-
-            <option value="MES">
-              Mês
-            </option>
-
-          </select>
+            id="refeicaoComidas"
+            class="multi-select"
+            multiple
+          ></select>
 
 
-          <input
-            type="date"
-            id="dataReferenciaCalendario"
-          >
+          <p class="small-help">
+            Segure CTRL no computador ou toque nas opções para selecionar várias comidas.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="button-row">
+
+        <button
+          class="btn-primary"
+          onclick="cadastrarRefeicao()"
+        >
+          Cadastrar refeição
+        </button>
+
+      </div>
+
+
+      <p
+        id="mensagemRefeicao"
+        class="feedback"
+      ></p>
+
+
+      <div
+        id="listaRefeicoes"
+        class="table-container"
+      >
+        Carregando...
+      </div>
+
+    </section>
+
+
+    <!-- ======================================================
+         CALENDÁRIO
+         ====================================================== -->
+
+    <section class="card">
+
+      <div class="section-header">
+
+        <div>
+
+          <h2>
+            Calendário Escolar
+          </h2>
+
+          <p class="subtitle">
+            Programe as duas refeições por dia.
+          </p>
 
         </div>
 
 
-        <div class="button-row">
+        <div class="week-tools">
 
           <button
             class="btn-secondary"
-            onclick="montarPeriodoCalendario()"
+            onclick="carregarSemanaAtual()"
           >
-            Montar período
+            Ver semana atual
           </button>
 
 
           <button
             class="btn-back"
-            onclick="limparProgramacao()"
-          >
-            Limpar programação
-          </button>
-
-        </div>
-
-
-        <p id="infoPeriodoCalendario"></p>
-
-
-        <!-- ===================================================
-             PROGRAMACAO DINÂMICA
-             =================================================== -->
-
-        <div
-          id="programacaoCalendario"
-        ></div>
-
-
-        <div class="button-row">
-
-          <button
-            class="btn-primary"
-            onclick="adicionarLinhaProgramacao()"
-          >
-            + Adicionar outra refeição
-          </button>
-
-
-          <button
-            class="btn-secondary"
-            onclick="salvarProgramacaoCalendario()"
-          >
-            Salvar programação
-          </button>
-
-        </div>
-
-
-        <p id="mensagemCalendario"></p>
-
-      </section>
-
-
-      <!-- =====================================================
-           CALENDÁRIO
-           ===================================================== -->
-
-      <section class="card">
-
-        <div class="section-header">
-
-          <div>
-
-            <h2>
-              Calendário
-            </h2>
-
-            <p class="subtitle">
-              Visualização de todas as refeições programadas.
-            </p>
-
-          </div>
-
-
-          <button
-            class="btn-small"
             onclick="carregarCalendario()"
           >
-            Atualizar
+            Ver todos
           </button>
 
         </div>
 
+      </div>
 
-        <div
-          id="listaCalendario"
-          class="table-container"
+
+      <div class="form-grid">
+
+        <input
+          id="calendarioData"
+          type="date"
         >
-          Verificando sessão...
-        </div>
 
 
-        <div class="button-row">
+        <select
+          id="calendarioHorario"
+        >
 
-          <button
-            class="btn-danger"
-            onclick="limparTodoCalendario()"
-          >
-            Limpar todo o calendário
-          </button>
+          <option value="">
+            Selecione o horário
+          </option>
 
-        </div>
-
-      </section>
-
-    </main>
-
-  </div>
+        </select>
 
 
-  <script>
+        <select
+          id="calendarioRefeicao"
+        >
+
+          <option value="">
+            Selecione a refeição
+          </option>
+
+        </select>
 
 
-    /**
-     * ========================================================
-     * VARIÁVEIS
-     * ========================================================
-     */
+        <input
+          id="calendarioObservacao"
+          class="full"
+          type="text"
+          placeholder="Observação opcional"
+        >
 
-    var listaRefeicoesDisponiveis = [];
-
-
-    var periodoAtual = null;
+      </div>
 
 
-    /**
-     * ========================================================
-     * TOKEN
-     * ========================================================
-     */
-    function obterTokenGestao() {
+      <div class="button-row">
 
-      var token =
-        String(
-          sessionStorage.getItem(
-            "token"
-          ) || ""
-        ).trim();
+        <button
+          class="btn-primary"
+          onclick="cadastrarCalendario()"
+        >
+          Adicionar ao calendário
+        </button>
+
+      </div>
 
 
-      var perfil =
-        String(
-          sessionStorage.getItem(
-            "perfil"
-          ) || ""
-        )
-        .trim()
-        .toUpperCase();
+      <p
+        id="mensagemCalendario"
+        class="feedback"
+      ></p>
 
 
-      if (
-        !token ||
-        perfil !== "GESTAO"
-      ) {
+      <div
+        id="listaCalendario"
+        class="table-container"
+      >
+        Carregando...
+      </div>
 
-        encerrarSessaoLocal();
+    </section>
 
-        return "";
+  </main>
+
+</div>
+
+
+<script>
+
+var TOKEN = "";
+
+
+/* ============================================================
+   SESSÃO
+   ============================================================ */
+
+function obterToken() {
+
+  var token =
+    String(
+      sessionStorage.getItem(
+        "token"
+      ) || ""
+    ).trim();
+
+
+  var perfil =
+    String(
+      sessionStorage.getItem(
+        "perfil"
+      ) || ""
+    )
+    .trim()
+    .toUpperCase();
+
+
+  if (
+    !token ||
+    perfil !==
+    "GESTAO"
+  ) {
+
+    voltarInicio();
+
+    return "";
+  }
+
+
+  return token;
+}
+
+
+function inicializarGestao() {
+
+  TOKEN =
+    obterToken();
+
+
+  if (!TOKEN) {
+    return;
+  }
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(resultado) {
+
+        if (
+          !resultado ||
+          !resultado.autenticado ||
+          !resultado.usuario
+        ) {
+
+          voltarInicio();
+
+          return;
+        }
+
+
+        if (
+          String(
+            resultado.usuario.perfil ||
+            ""
+          )
+          .trim()
+          .toUpperCase() !==
+          "GESTAO"
+        ) {
+
+          voltarInicio();
+
+          return;
+        }
+
+
+        document
+          .getElementById(
+            "nomeGestao"
+          )
+          .textContent =
+          "Olá, " +
+          (
+            resultado.usuario.nome ||
+            "Gestão"
+          ) +
+          "!";
+
+
+        carregarConfiguracaoHorarios();
+
+        carregarOpcoesDeComidas();
+
+        carregarComidas();
+
+        carregarRefeicoes();
+
+        carregarCalendario();
+
       }
+    )
+
+    .withFailureHandler(
+      voltarInicio
+    )
+
+    .consultarSessao(
+      TOKEN
+    );
+}
 
 
-      return token;
-    }
+/* ============================================================
+   HORÁRIOS
+   ============================================================ */
+
+function renderizarOpcoesHorario(
+  configuracao
+) {
+
+  var select =
+    document.getElementById(
+      "calendarioHorario"
+    );
 
 
-    /**
-     * ========================================================
-     * INICIALIZAR
-     * ========================================================
-     */
-    function inicializarGestao() {
-
-      var token =
-        obterTokenGestao();
+  select.innerHTML =
+    '<option value="">Selecione o horário</option>';
 
 
-      if (!token) {
-        return;
-      }
+  (
+    configuracao &&
+    configuracao.horarios
+      ? configuracao.horarios
+      : []
+  )
+  .forEach(
+    function(horario) {
 
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            if (
-              !resultado ||
-              !resultado.autenticado ||
-              !resultado.usuario
-            ) {
-
-              encerrarSessaoLocal();
-
-              return;
-            }
-
-
-            var perfil =
-              String(
-                resultado.usuario.perfil ||
-                ""
-              )
-              .trim()
-              .toUpperCase();
-
-
-            if (
-              perfil !== "GESTAO"
-            ) {
-
-              encerrarSessaoLocal();
-
-              return;
-            }
-
-
-            sessionStorage.setItem(
-              "perfil",
-              perfil
-            );
-
-
-            sessionStorage.setItem(
-              "nome",
-              resultado.usuario.nome ||
-              "Gestão"
-            );
-
-
-            document
-              .getElementById(
-                "nomeGestao"
-              )
-              .textContent =
-                "Olá, " +
-                (
-                  resultado.usuario.nome ||
-                  "Gestão"
-                ) +
-                "!";
-
-
-            carregarProdutos();
-
-            carregarCalendario();
-          }
-        )
-
-        .withFailureHandler(
-          function() {
-
-            encerrarSessaoLocal();
-          }
-        )
-
-        .consultarSessao(
-          token
+      var option =
+        document.createElement(
+          "option"
         );
+
+
+      option.value =
+        horario;
+
+
+      option.textContent =
+        horario;
+
+
+      select.appendChild(
+        option
+      );
     }
+  );
+}
 
 
-    /**
-     * ========================================================
-     * CARREGAR REFEIÇÕES
-     * ========================================================
-     */
-    function carregarProdutos() {
+function carregarConfiguracaoHorarios() {
 
-      var lista =
-        document.getElementById(
-          "listaProdutos"
+  google.script.run
+
+    .withSuccessHandler(
+      function(configuracao) {
+
+        document
+          .getElementById(
+            "horarioRefeicao1"
+          )
+          .value =
+          configuracao.horario1 ||
+          "";
+
+
+        document
+          .getElementById(
+            "horarioRefeicao2"
+          )
+          .value =
+          configuracao.horario2 ||
+          "";
+
+
+        renderizarOpcoesHorario(
+          configuracao
         );
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
       }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        document
+          .getElementById(
+            "mensagemHorarios"
+          )
+          .textContent =
+          erro &&
+          erro.message
+            ? erro.message
+            : "Erro ao carregar os horários das refeições.";
+      }
+    )
+
+    .listarConfiguracaoHorariosRefeicoes(
+      TOKEN
+    );
+}
 
 
-      lista.innerHTML =
-        "Carregando refeições...";
+function salvarHorariosRefeicoes() {
+
+  var horario1 =
+    document
+      .getElementById(
+        "horarioRefeicao1"
+      )
+      .value;
 
 
-      google.script.run
-
-        .withSuccessHandler(
-          function(produtos) {
-
-            listaRefeicoesDisponiveis =
-              Array.isArray(
-                produtos
-              )
-                ? produtos
-                : [];
+  var horario2 =
+    document
+      .getElementById(
+        "horarioRefeicao2"
+      )
+      .value;
 
 
-            atualizarSelectsDeRefeicoes();
+  var mensagem =
+    document.getElementById(
+      "mensagemHorarios"
+    );
 
 
-            if (
-              listaRefeicoesDisponiveis.length === 0
-            ) {
+  if (
+    !horario1 ||
+    !horario2
+  ) {
 
-              lista.innerHTML =
-                "<p>Nenhuma refeição cadastrada.</p>";
+    mensagem.textContent =
+      "Informe os dois horários das refeições.";
 
-              return;
-            }
-
-
-            var html =
-              "<table>" +
-
-              "<thead>" +
-
-              "<tr>" +
-
-              "<th>Refeição</th>" +
-
-              "<th>Descrição</th>" +
-
-              "<th>Status</th>" +
-
-              "<th>Ações</th>" +
-
-              "</tr>" +
-
-              "</thead>" +
-
-              "<tbody>";
+    return;
+  }
 
 
-            listaRefeicoesDisponiveis.forEach(
-              function(produto) {
+  if (
+    horario1 ===
+    horario2
+  ) {
 
-                html +=
+    mensagem.textContent =
+      "Os horários das duas refeições devem ser diferentes.";
 
-                  "<tr>" +
+    return;
+  }
 
-                  "<td>" +
-                  escaparHTML(
-                    produto.nome
-                  ) +
-                  "</td>" +
 
-                  "<td>" +
-                  escaparHTML(
-                    produto.descricao
-                  ) +
-                  "</td>" +
+  mensagem.textContent =
+    "Salvando...";
 
-                  "<td>" +
-                  escaparHTML(
-                    produto.ativo
-                  ) +
-                  "</td>" +
 
-                  "<td>" +
+  google.script.run
 
-                  "<button " +
-                  "class='btn-small' " +
-                  "onclick=\"editarProduto('" +
-                  escaparAtributo(
-                    produto.id_produto
-                  ) +
-                  "')\">" +
-                  "Editar" +
-                  "</button> " +
+    .withSuccessHandler(
+      function(resultado) {
 
-                  "<button " +
-                  "class='btn-danger btn-small' " +
-                  "onclick=\"excluirProduto('" +
-                  escaparAtributo(
-                    produto.id_produto
-                  ) +
-                  "')\">" +
-                  "Excluir" +
-                  "</button>" +
+        mensagem.textContent =
+          resultado.mensagem;
 
-                  "</td>" +
 
-                  "</tr>";
-              }
-            );
+        carregarConfiguracaoHorarios();
 
+        carregarCalendario();
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        mensagem.textContent =
+          erro &&
+          erro.message
+            ? erro.message
+            : "Não foi possível salvar os horários.";
+      }
+    )
+
+    .salvarConfiguracaoHorariosRefeicoes(
+      TOKEN,
+      horario1,
+      horario2
+    );
+}
+
+
+/* ============================================================
+   COMIDAS
+   ============================================================ */
+
+function cadastrarComida() {
+
+  var nome =
+    document
+      .getElementById(
+        "comidaNome"
+      )
+      .value
+      .trim();
+
+
+  var descricao =
+    document
+      .getElementById(
+        "comidaDescricao"
+      )
+      .value
+      .trim();
+
+
+  var mensagem =
+    document.getElementById(
+      "mensagemComida"
+    );
+
+
+  if (!nome) {
+
+    mensagem.textContent =
+      "Informe o nome da comida.";
+
+    return;
+  }
+
+
+  mensagem.textContent =
+    "Salvando...";
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(resultado) {
+
+        mensagem.textContent =
+          resultado.mensagem;
+
+
+        document
+          .getElementById(
+            "comidaNome"
+          )
+          .value =
+          "";
+
+
+        document
+          .getElementById(
+            "comidaDescricao"
+          )
+          .value =
+          "";
+
+
+        carregarComidas();
+
+        carregarOpcoesDeComidas();
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        mensagem.textContent =
+          erro &&
+          erro.message
+            ? erro.message
+            : "Erro ao cadastrar comida.";
+      }
+    )
+
+    .cadastrarComida(
+      TOKEN,
+      {
+        nome:
+          nome,
+
+        descricao:
+          descricao
+      }
+    );
+}
+
+
+function carregarComidas() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(lista) {
+
+        var div =
+          document.getElementById(
+            "listaComidas"
+          );
+
+
+        if (
+          !lista ||
+          !lista.length
+        ) {
+
+          div.innerHTML =
+            "<p>Nenhuma comida cadastrada.</p>";
+
+          return;
+        }
+
+
+        var html =
+          "<table>" +
+          "<thead>" +
+          "<tr>" +
+          "<th>Comida</th>" +
+          "<th>Descrição</th>" +
+          "<th>Status</th>" +
+          "<th>Ação</th>" +
+          "</tr>" +
+          "</thead>" +
+          "<tbody>";
+
+
+        lista.forEach(
+          function(comida) {
 
             html +=
-              "</tbody>" +
-              "</table>";
+              "<tr>" +
 
+              "<td>" +
+              escaparHTML(
+                comida.nome
+              ) +
+              "</td>" +
 
-            lista.innerHTML =
-              html;
+              "<td>" +
+              escaparHTML(
+                comida.descricao ||
+                ""
+              ) +
+              "</td>" +
+
+              "<td>" +
+              escaparHTML(
+                comida.ativo ||
+                "SIM"
+              ) +
+              "</td>" +
+
+              "<td>" +
+
+              "<button " +
+              "class='btn-small btn-danger' " +
+              "onclick=\"excluirComida('" +
+              escaparJS(
+                comida.id_comida ||
+                comida.id_produto
+              ) +
+              "')\">" +
+              "Excluir" +
+              "</button>" +
+
+              "</td>" +
+
+              "</tr>";
           }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              lista,
-              "Erro ao carregar refeições."
-            );
-          }
-        )
-
-        .listarProdutos(
-          token
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * ATUALIZAR SELECTS DE REFEIÇÕES
-     * ========================================================
-     */
-    function atualizarSelectsDeRefeicoes() {
-
-      var selects =
-        document.querySelectorAll(
-          ".select-refeicao-programacao"
         );
 
 
-      for (
-        var i = 0;
-        i < selects.length;
-        i++
-      ) {
+        html +=
+          "</tbody></table>";
+
+
+        div.innerHTML =
+          html;
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        document
+          .getElementById(
+            "listaComidas"
+          )
+          .innerHTML =
+          "<p class='error-message'>" +
+          escaparHTML(
+            erro &&
+            erro.message
+              ? erro.message
+              : "Erro ao carregar comidas."
+          ) +
+          "</p>";
+      }
+    )
+
+    .listarComidas(
+      TOKEN
+    );
+}
+
+
+function carregarOpcoesDeComidas() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(lista) {
 
         var select =
-          selects[i];
-
-
-        var valorAtual =
-          select.value;
+          document.getElementById(
+            "refeicaoComidas"
+          );
 
 
         select.innerHTML =
-          "<option value=''>" +
-          "Selecione a refeição" +
-          "</option>";
+          "";
 
 
-        listaRefeicoesDisponiveis.forEach(
-          function(refeicao) {
+        (
+          lista || []
+        )
+        .filter(
+          function(comida) {
 
-            if (
-              !refeicao ||
-              !refeicao.id_produto
-            ) {
-
-              return;
-            }
-
-
-            if (
+            return (
+              comida &&
               String(
-                refeicao.ativo || ""
+                comida.ativo ||
+                "SIM"
               )
               .trim()
-              .toUpperCase() !==
+              .toUpperCase() ===
               "SIM"
-            ) {
-
-              return;
-            }
-
+            );
+          }
+        )
+        .forEach(
+          function(comida) {
 
             var option =
               document.createElement(
@@ -695,12 +985,238 @@
 
 
             option.value =
-              refeicao.id_produto;
+              String(
+                comida.id_produto ||
+                comida.id_comida ||
+                ""
+              );
 
 
             option.textContent =
-              refeicao.nome ||
-              "";
+              comida.nome ||
+              "Comida sem nome";
+
+
+            select.appendChild(
+              option
+            );
+          }
+        );
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        console.error(
+          "Erro ao carregar comidas:",
+          erro
+        );
+      }
+    )
+
+    .listarComidasAtivas(
+      TOKEN
+    );
+}
+/* ============================================================
+   REFEIÇÕES
+   ============================================================ */
+
+function cadastrarRefeicao() {
+
+  var nome =
+    document
+      .getElementById(
+        "refeicaoNome"
+      )
+      .value
+      .trim();
+
+
+  var descricao =
+    document
+      .getElementById(
+        "refeicaoDescricao"
+      )
+      .value
+      .trim();
+
+
+  var select =
+    document.getElementById(
+      "refeicaoComidas"
+    );
+
+
+  var ids =
+    Array.prototype
+      .slice
+      .call(
+        select.selectedOptions
+      )
+      .map(
+        function(option) {
+
+          return option.value;
+        }
+      );
+
+
+  var mensagem =
+    document.getElementById(
+      "mensagemRefeicao"
+    );
+
+
+  if (!nome) {
+
+    mensagem.textContent =
+      "Informe o nome da refeição.";
+
+    return;
+  }
+
+
+  if (
+    !ids.length
+  ) {
+
+    mensagem.textContent =
+      "Selecione pelo menos uma comida.";
+
+    return;
+  }
+
+
+  mensagem.textContent =
+    "Salvando...";
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(resultado) {
+
+        mensagem.textContent =
+          resultado.mensagem;
+
+
+        document
+          .getElementById(
+            "refeicaoNome"
+          )
+          .value =
+          "";
+
+
+        document
+          .getElementById(
+            "refeicaoDescricao"
+          )
+          .value =
+          "";
+
+
+        Array.prototype
+          .forEach
+          .call(
+            select.options,
+            function(option) {
+
+              option.selected =
+                false;
+            }
+          );
+
+
+        carregarRefeicoes();
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        mensagem.textContent =
+          erro &&
+          erro.message
+            ? erro.message
+            : "Erro ao cadastrar refeição.";
+      }
+    )
+
+    .cadastrarRefeicao(
+      TOKEN,
+      {
+        nome:
+          nome,
+
+        descricao:
+          descricao,
+
+        id_comidas:
+          ids
+      }
+    );
+}
+
+
+function carregarRefeicoes() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(lista) {
+
+        var select =
+          document.getElementById(
+            "calendarioRefeicao"
+          );
+
+
+        select.innerHTML =
+          '<option value="">Selecione a refeição</option>';
+
+
+        (
+          lista ||
+          []
+        )
+        .filter(
+          function(refeicao) {
+
+            return (
+              String(
+                refeicao.ativo ||
+                "SIM"
+              )
+              .trim()
+              .toUpperCase() ===
+              "SIM"
+            );
+          }
+        )
+        .forEach(
+          function(refeicao) {
+
+            var option =
+              document.createElement(
+                "option"
+              );
+
+
+            option.value =
+              refeicao.id_refeicao;
+
+
+            option.textContent =
+              refeicao.nome +
+              (
+                refeicao.comidasTexto
+                  ? " — " +
+                    refeicao.comidasTexto
+                  : ""
+              );
 
 
             select.appendChild(
@@ -710,1893 +1226,834 @@
         );
 
 
-        if (
-          valorAtual
-        ) {
-
-          select.value =
-            valorAtual;
-        }
-      }
-    }
-
-
-    /**
-     * ========================================================
-     * SALVAR REFEIÇÃO
-     * ========================================================
-     */
-    function salvarProduto() {
-
-      var id =
-        document
-          .getElementById(
-            "idProduto"
-          )
-          .value
-          .trim();
-
-
-      var nome =
-        document
-          .getElementById(
-            "nomeProduto"
-          )
-          .value
-          .trim();
-
-
-      var descricao =
-        document
-          .getElementById(
-            "descricaoProduto"
-          )
-          .value
-          .trim();
-
-
-      var mensagem =
-        document.getElementById(
-          "mensagemProduto"
-        );
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      if (!nome) {
-
-        mensagem.textContent =
-          "Digite o nome da refeição.";
-
-        return;
-      }
-
-
-      mensagem.textContent =
-        "Salvando...";
-
-
-      if (id) {
-
-        atualizarProduto(
-          id,
-          nome,
-          descricao
-        );
-
-        return;
-      }
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            mensagem.textContent =
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Refeição cadastrada com sucesso.";
-
-
-            limparFormularioProduto();
-
-            carregarProdutos();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              mensagem,
-              "Erro ao cadastrar refeição."
-            );
-          }
-        )
-
-        .cadastrarProduto(
-          token,
-          {
-
-            nome:
-              nome,
-
-            descricao:
-              descricao
-          }
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * ATUALIZAR REFEIÇÃO
-     * ========================================================
-     */
-    function atualizarProduto(
-      id,
-      nome,
-      descricao
-    ) {
-
-      var mensagem =
-        document.getElementById(
-          "mensagemProduto"
-        );
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      mensagem.textContent =
-        "Atualizando...";
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            mensagem.textContent =
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Refeição atualizada com sucesso.";
-
-
-            limparFormularioProduto();
-
-            carregarProdutos();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              mensagem,
-              "Erro ao atualizar refeição."
-            );
-          }
-        )
-
-        .atualizarProduto(
-          token,
-          id,
-          {
-
-            nome:
-              nome,
-
-            descricao:
-              descricao,
-
-            ativo:
-              "SIM"
-          }
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * EDITAR REFEIÇÃO
-     * ========================================================
-     */
-    function editarProduto(
-      idProduto
-    ) {
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(produto) {
-
-            if (!produto) {
-
-              alert(
-                "Refeição não encontrada."
-              );
-
-              return;
-            }
-
-
-            document
-              .getElementById(
-                "idProduto"
-              )
-              .value =
-                produto.id_produto ||
-                "";
-
-
-            document
-              .getElementById(
-                "nomeProduto"
-              )
-              .value =
-                produto.nome ||
-                "";
-
-
-            document
-              .getElementById(
-                "descricaoProduto"
-              )
-              .value =
-                produto.descricao ||
-                "";
-
-
-            document
-              .getElementById(
-                "mensagemProduto"
-              )
-              .textContent =
-                "Editando refeição.";
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              null,
-              "Erro ao buscar refeição."
-            );
-          }
-        )
-
-        .buscarProdutoPorId(
-          token,
-          idProduto
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * EXCLUIR REFEIÇÃO
-     * ========================================================
-     */
-    function excluirProduto(
-      idProduto
-    ) {
-
-      if (
-        !window.confirm(
-          "Deseja realmente excluir esta refeição?"
-        )
-      ) {
-
-        return;
-      }
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            alert(
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Refeição excluída."
-            );
-
-
-            limparFormularioProduto();
-
-            carregarProdutos();
-
-            carregarCalendario();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              null,
-              "Erro ao excluir refeição."
-            );
-          }
-        )
-
-        .excluirProduto(
-          token,
-          idProduto
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * LIMPAR TODAS AS REFEIÇÕES
-     * ========================================================
-     */
-    function limparTodasRefeicoes() {
-
-      if (
-        !window.confirm(
-          "Deseja realmente apagar TODAS as refeições cadastradas?"
-        )
-      ) {
-
-        return;
-      }
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            alert(
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Refeições removidas."
-            );
-
-
-            limparFormularioProduto();
-
-            carregarProdutos();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            alert(
-              (
-                erro &&
-                erro.message
-              ) ||
-              "Não foi possível limpar as refeições."
-            );
-          }
-        )
-
-        .excluirTodasRefeicoes(
-          token
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * LIMPAR FORMULÁRIO DE REFEIÇÃO
-     * ========================================================
-     */
-    function limparFormularioProduto() {
-
-      document
-        .getElementById(
-          "idProduto"
-        )
-        .value =
-        "";
-
-
-      document
-        .getElementById(
-          "nomeProduto"
-        )
-        .value =
-        "";
-
-
-      document
-        .getElementById(
-          "descricaoProduto"
-        )
-        .value =
-        "";
-
-
-      document
-        .getElementById(
-          "mensagemProduto"
-        )
-        .textContent =
-        "";
-    }
-
-
-    /**
-     * ========================================================
-     * MONTAR PERÍODO
-     * ========================================================
-     */
-    function montarPeriodoCalendario() {
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      var abrangencia =
-        document
-          .getElementById(
-            "abrangenciaCalendario"
-          )
-          .value;
-
-
-      var dataReferencia =
-        document
-          .getElementById(
-            "dataReferenciaCalendario"
-          )
-          .value;
-
-
-      var info =
-        document.getElementById(
-          "infoPeriodoCalendario"
-        );
-
-
-      if (
-        !dataReferencia
-      ) {
-
-        info.textContent =
-          "Escolha a data de referência.";
-
-        return;
-      }
-
-
-      info.textContent =
-        "Montando período...";
-
-
-      var data =
-        criarDataLocal(
-          dataReferencia
-        );
-
-
-      var inicio =
-        new Date(
-          data.getTime()
-        );
-
-
-      var fim;
-
-
-      if (
-        abrangencia === "SEMANA"
-      ) {
-
-        var diaSemana =
-          inicio.getDay();
-
-
-        var distanciaSegunda =
-          diaSemana === 0
-            ? 6
-            : diaSemana - 1;
-
-
-        inicio.setDate(
-          inicio.getDate() -
-          distanciaSegunda
-        );
-
-
-        fim =
-          new Date(
-            inicio.getTime()
+        var div =
+          document.getElementById(
+            "listaRefeicoes"
           );
-
-
-        fim.setDate(
-          inicio.getDate() + 6
-        );
-      }
-
-
-      else {
-
-        inicio =
-          new Date(
-            data.getFullYear(),
-            data.getMonth(),
-            1
-          );
-
-
-        fim =
-          new Date(
-            data.getFullYear(),
-            data.getMonth() + 1,
-            0
-          );
-      }
-
-
-      periodoAtual = {
-
-        abrangencia:
-          abrangencia,
-
-        inicio:
-          formatarDataInput(
-            inicio
-          ),
-
-        fim:
-          formatarDataInput(
-            fim
-          )
-      };
-
-
-      var mensagemPeriodo =
-        formatarDataVisual(
-          inicio
-        ) +
-        " até " +
-        formatarDataVisual(
-          fim
-        );
-
-
-      info.textContent =
-        (
-          abrangencia === "SEMANA"
-            ? "Semana: "
-            : "Mês: "
-        ) +
-        mensagemPeriodo;
-
-
-      criarLinhasProgramacao(
-        inicio,
-        fim
-      );
-    }
-
-
-    /**
-     * ========================================================
-     * CRIAR LINHAS DO PERÍODO
-     * ========================================================
-     */
-    function criarLinhasProgramacao(
-      inicio,
-      fim
-    ) {
-
-      var container =
-        document.getElementById(
-          "programacaoCalendario"
-        );
-
-
-      container.innerHTML =
-        "";
-
-
-      var atual =
-        new Date(
-          inicio.getTime()
-        );
-
-
-      while (
-        atual.getTime() <=
-        fim.getTime()
-      ) {
-
-        adicionarLinhaProgramacao(
-          formatarDataInput(
-            atual
-          )
-        );
-
-
-        atual.setDate(
-          atual.getDate() + 1
-        );
-      }
-
-
-      atualizarSelectsDeRefeicoes();
-    }
-
-
-    /**
-     * ========================================================
-     * ADICIONAR LINHA DE PROGRAMAÇÃO
-     * ========================================================
-     */
-    function adicionarLinhaProgramacao(
-      dataInicial
-    ) {
-
-      var container =
-        document.getElementById(
-          "programacaoCalendario"
-        );
-
-
-      var linha =
-        document.createElement(
-          "div"
-        );
-
-
-      linha.className =
-        "card";
-
-      linha.style.marginBottom =
-        "12px";
-
-
-      var dataAtual =
-        dataInicial ||
-        (
-          periodoAtual
-            ? periodoAtual.inicio
-            : ""
-        );
-
-
-      linha.innerHTML =
-
-        "<div class='form-grid'>" +
-
-        "<input " +
-        "type='date' " +
-        "class='data-programacao' " +
-        "value='" +
-        escaparAtributo(
-          dataAtual
-        ) +
-        "'>" +
-
-        "<select class='select-refeicao-programacao'>" +
-
-        "<option value=''>" +
-        "Selecione a refeição" +
-        "</option>" +
-
-        "</select>" +
-
-        "<select class='periodo-programacao'>" +
-
-        "<option value=''>" +
-        "Selecione o horário" +
-        "</option>" +
-
-        "<option value='15:55'>" +
-        "15:55" +
-        "</option>" +
-
-        "<option value='18:45'>" +
-        "18:45" +
-        "</option>" +
-
-        "</select>" +
-
-        "<input " +
-        "type='text' " +
-        "class='cardapio-programacao' " +
-        "placeholder='Cardápio'>" +
-
-        "</div>" +
-
-        "<textarea " +
-        "class='observacao-programacao' " +
-        "rows='2' " +
-        "placeholder='Observação'></textarea>" +
-
-        "<div class='button-row'>" +
-
-        "<button " +
-        "type='button' " +
-        "class='btn-danger btn-small' " +
-        "onclick='removerLinhaProgramacao(this)'>" +
-
-        "Remover" +
-
-        "</button>" +
-
-        "</div>";
-
-
-      container.appendChild(
-        linha
-      );
-
-
-      atualizarSelectsDeRefeicoes();
-    }
-
-
-    /**
-     * ========================================================
-     * REMOVER LINHA
-     * ========================================================
-     */
-    function removerLinhaProgramacao(
-      botao
-    ) {
-
-      var linha =
-        botao.closest(
-          ".card"
-        );
-
-
-      if (
-        linha
-      ) {
-
-        linha.remove();
-      }
-    }
-
-
-    /**
-     * ========================================================
-     * SALVAR PROGRAMAÇÃO
-     * ========================================================
-     */
-    function salvarProgramacaoCalendario() {
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      var mensagem =
-        document.getElementById(
-          "mensagemCalendario"
-        );
-
-
-      if (
-        !periodoAtual
-      ) {
-
-        mensagem.textContent =
-          "Primeiro monte a semana ou o mês.";
-
-        return;
-      }
-
-
-      var linhas =
-        document.querySelectorAll(
-          "#programacaoCalendario .card"
-        );
-
-
-      if (
-        linhas.length === 0
-      ) {
-
-        mensagem.textContent =
-          "Adicione pelo menos uma programação.";
-
-        return;
-      }
-
-
-      var registros = [];
-
-
-      for (
-        var i = 0;
-        i < linhas.length;
-        i++
-      ) {
-
-        var linha =
-          linhas[i];
-
-
-        var data =
-          linha
-            .querySelector(
-              ".data-programacao"
-            )
-            .value;
-
-
-        var idRefeicao =
-          linha
-            .querySelector(
-              ".select-refeicao-programacao"
-            )
-            .value;
-
-
-        var periodo =
-          linha
-            .querySelector(
-              ".periodo-programacao"
-            )
-            .value;
-
-
-        var cardapio =
-          linha
-            .querySelector(
-              ".cardapio-programacao"
-            )
-            .value
-            .trim();
-
-
-        var observacao =
-          linha
-            .querySelector(
-              ".observacao-programacao"
-            )
-            .value
-            .trim();
-
-
-        if (!data) {
-
-          mensagem.textContent =
-            "Todas as linhas precisam ter uma data.";
-
-          return;
-        }
-
-
-        if (!dataDentroDoPeriodo(
-          data,
-          periodoAtual
-        )) {
-
-          mensagem.textContent =
-            "A data " +
-            formatarDataVisual(
-              criarDataLocal(
-                data
-              )
-            ) +
-            " está fora do período selecionado.";
-
-          return;
-        }
-
-
-        if (!idRefeicao) {
-
-          mensagem.textContent =
-            "Selecione a refeição em todas as linhas.";
-
-          return;
-        }
 
 
         if (
-          [
-            "15:55",
-            "18:45"
-          ].indexOf(
-            periodo
-          ) === -1
+          !lista ||
+          !lista.length
         ) {
 
-          mensagem.textContent =
-            "O horário deve ser 15:55 ou 18:45.";
+          div.innerHTML =
+            "<p>Nenhuma refeição cadastrada.</p>";
 
           return;
         }
 
 
-        if (!cardapio) {
-
-          mensagem.textContent =
-            "Informe o cardápio em todas as linhas.";
-
-          return;
-        }
-
-
-        registros.push({
-
-          data:
-            data,
-
-          id_refeicao:
-            idRefeicao,
-
-          periodo:
-            periodo,
-
-          cardapio:
-            cardapio,
-
-          observacao:
-            observacao
-        });
-      }
-
-
-      mensagem.textContent =
-        "Salvando programação...";
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            mensagem.textContent =
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Programação salva com sucesso.";
-
-
-            limparProgramacao();
-
-            carregarCalendario();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              mensagem,
-              "Erro ao salvar programação."
-            );
-          }
-        )
-
-        .cadastrarCalendariosPeriodo(
-          token,
-          {
-
-            abrangencia:
-              periodoAtual.abrangencia,
-
-            dataReferencia:
-              periodoAtual.inicio,
-
-            registros:
-              registros
-          }
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * LIMPAR PROGRAMAÇÃO
-     * ========================================================
-     */
-    function limparProgramacao() {
-
-      periodoAtual =
-        null;
-
-
-      document
-        .getElementById(
-          "dataReferenciaCalendario"
-        )
-        .value =
-        "";
-
-
-      document
-        .getElementById(
-          "abrangenciaCalendario"
-        )
-        .value =
-        "SEMANA";
-
-
-      document
-        .getElementById(
-          "programacaoCalendario"
-        )
-        .innerHTML =
-        "";
-
-
-      document
-        .getElementById(
-          "infoPeriodoCalendario"
-        )
-        .textContent =
-        "";
-
-
-      document
-        .getElementById(
-          "mensagemCalendario"
-        )
-        .textContent =
-        "";
-    }
-
-
-    /**
-     * ========================================================
-     * CARREGAR CALENDÁRIO
-     * ========================================================
-     */
-    function carregarCalendario() {
-
-      var lista =
-        document.getElementById(
-          "listaCalendario"
-        );
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      lista.innerHTML =
-        "Carregando calendário...";
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(calendario) {
-
-            if (
-              !calendario ||
-              calendario.length === 0
-            ) {
-
-              lista.innerHTML =
-                "<p>Nenhum registro no calendário.</p>";
-
-              return;
-            }
-
-
-            var html =
-              "<table>" +
-
-              "<thead>" +
-
-              "<tr>" +
-
-              "<th>Data</th>" +
-
-              "<th>Horário</th>" +
-
-              "<th>Refeição</th>" +
-
-              "<th>Cardápio</th>" +
-
-              "<th>Observação</th>" +
-
-              "<th>Ação</th>" +
-
-              "</tr>" +
-
-              "</thead>" +
-
-              "<tbody>";
-
-
-            calendario.forEach(
-              function(item) {
-
-                html +=
-
-                  "<tr>" +
-
-                  "<td>" +
-
-                  escaparHTML(
-                    formatarData(
-                      item.data
-                    )
-                  ) +
-
-                  "</td>" +
-
-                  "<td>" +
-
-                  escaparHTML(
-                    normalizarHorarioCliente(
-                      item.periodo
-                    )
-                  ) +
-
-                  "</td>" +
-
-                  "<td>" +
-
-                  escaparHTML(
-                    item.refeicao ||
-                    ""
-                  ) +
-
-                  "</td>" +
-
-                  "<td>" +
-
-                  escaparHTML(
-                    item.cardapio ||
-                    ""
-                  )
-                  .replace(
-                    /\n/g,
-                    "<br>"
-                  ) +
-
-                  "</td>" +
-
-                  "<td>" +
-
-                  escaparHTML(
-                    item.observacao ||
-                    ""
-                  ) +
-
-                  "</td>" +
-
-                  "<td>" +
-
-                  "<button " +
-
-                  "class='btn-danger btn-small' " +
-
-                  "onclick=\"excluirCalendario('" +
-
-                  escaparAtributo(
-                    item.id_calendario
-                  ) +
-
-                  "')\">" +
-
-                  "Excluir" +
-
-                  "</button>" +
-
-                  "</td>" +
-
-                  "</tr>";
-              }
-            );
-
+        var html =
+          "<table>" +
+          "<thead>" +
+          "<tr>" +
+          "<th>Refeição</th>" +
+          "<th>Comidas</th>" +
+          "<th>Descrição</th>" +
+          "<th>Status</th>" +
+          "<th>Ação</th>" +
+          "</tr>" +
+          "</thead>" +
+          "<tbody>";
+
+
+        lista.forEach(
+          function(refeicao) {
 
             html +=
-              "</tbody>" +
-              "</table>";
+              "<tr>" +
 
+              "<td>" +
+              escaparHTML(
+                refeicao.nome
+              ) +
+              "</td>" +
 
-            lista.innerHTML =
-              html;
+              "<td>" +
+              escaparHTML(
+                refeicao.comidasTexto ||
+                "—"
+              ) +
+              "</td>" +
+
+              "<td>" +
+              escaparHTML(
+                refeicao.descricao ||
+                ""
+              ) +
+              "</td>" +
+
+              "<td>" +
+              escaparHTML(
+                refeicao.ativo ||
+                "SIM"
+              ) +
+              "</td>" +
+
+              "<td>" +
+
+              "<button " +
+              "class='btn-small btn-danger' " +
+              "onclick=\"excluirRefeicao('" +
+              escaparJS(
+                refeicao.id_refeicao
+              ) +
+              "')\">" +
+              "Excluir" +
+              "</button>" +
+
+              "</td>" +
+
+              "</tr>";
           }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              lista,
-              "Erro ao carregar calendário."
-            );
-          }
-        )
-
-        .listarCalendario(
-          token
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * EXCLUIR REGISTRO
-     * ========================================================
-     */
-    function excluirCalendario(
-      idCalendario
-    ) {
-
-      if (
-        !window.confirm(
-          "Deseja excluir este registro do calendário?"
-        )
-      ) {
-
-        return;
-      }
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            alert(
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Registro excluído."
-            );
-
-
-            carregarCalendario();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            tratarErroSessao(
-              erro,
-              null,
-              "Erro ao excluir registro."
-            );
-          }
-        )
-
-        .excluirCalendario(
-          token,
-          idCalendario
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * LIMPAR TODO O CALENDÁRIO
-     * ========================================================
-     */
-    function limparTodoCalendario() {
-
-      if (
-        !window.confirm(
-          "Deseja realmente apagar TODOS os registros do calendário?"
-        )
-      ) {
-
-        return;
-      }
-
-
-      var token =
-        obterTokenGestao();
-
-
-      if (!token) {
-        return;
-      }
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado) {
-
-            alert(
-              (
-                resultado &&
-                resultado.mensagem
-              ) ||
-              "Calendário limpo."
-            );
-
-
-            carregarCalendario();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            alert(
-              (
-                erro &&
-                erro.message
-              ) ||
-              "Não foi possível limpar o calendário."
-            );
-          }
-        )
-
-        .excluirTodosCalendario(
-          token
-        );
-    }
-
-
-    /**
-     * ========================================================
-     * SAIR
-     * ========================================================
-     */
-    function sairGestao() {
-
-      var token =
-        String(
-          sessionStorage.getItem(
-            "token"
-          ) || ""
-        ).trim();
-
-
-      sessionStorage.clear();
-
-
-      if (!token) {
-
-        carregarPagina(
-          "Index"
         );
 
-        return;
+
+        html +=
+          "</tbody></table>";
+
+
+        div.innerHTML =
+          html;
       }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        document
+          .getElementById(
+            "listaRefeicoes"
+          )
+          .innerHTML =
+          "<p class='error-message'>" +
+          escaparHTML(
+            erro &&
+            erro.message
+              ? erro.message
+              : "Erro ao carregar refeições."
+          ) +
+          "</p>";
+      }
+    )
+
+    .listarRefeicoes(
+      TOKEN
+    );
+}
 
 
-      google.script.run
+/* ============================================================
+   CALENDÁRIO
+   ============================================================ */
 
-        .withSuccessHandler(
-          function() {
+function cadastrarCalendario() {
 
-            carregarPagina(
-              "Index"
-            );
-          }
-        )
-
-        .withFailureHandler(
-          function() {
-
-            carregarPagina(
-              "Index"
-            );
-          }
-        )
-
-        .logout(
-          token
-        );
-    }
+  var data =
+    document
+      .getElementById(
+        "calendarioData"
+      )
+      .value;
 
 
-    /**
-     * ========================================================
-     * ENCERRAR SESSÃO
-     * ========================================================
-     */
-    function encerrarSessaoLocal() {
-
-      sessionStorage.clear();
-
-      carregarPagina(
-        "Index"
-      );
-    }
+  var horario =
+    document
+      .getElementById(
+        "calendarioHorario"
+      )
+      .value;
 
 
-    /**
-     * ========================================================
-     * TRATAR ERRO DE SESSÃO
-     * ========================================================
-     */
-    function tratarErroSessao(
-      erro,
-      elemento,
-      mensagemPadrao
-    ) {
+  var idRefeicao =
+    document
+      .getElementById(
+        "calendarioRefeicao"
+      )
+      .value;
 
-      var mensagem =
-        (
+
+  var observacao =
+    document
+      .getElementById(
+        "calendarioObservacao"
+      )
+      .value
+      .trim();
+
+
+  var mensagem =
+    document.getElementById(
+      "mensagemCalendario"
+    );
+
+
+  if (!data) {
+
+    mensagem.textContent =
+      "Informe a data.";
+
+    return;
+  }
+
+
+  if (!horario) {
+
+    mensagem.textContent =
+      "Selecione o horário da refeição.";
+
+    return;
+  }
+
+
+  if (!idRefeicao) {
+
+    mensagem.textContent =
+      "Selecione uma refeição.";
+
+    return;
+  }
+
+
+  mensagem.textContent =
+    "Adicionando...";
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(resultado) {
+
+        mensagem.textContent =
+          resultado.mensagem;
+
+
+        document
+          .getElementById(
+            "calendarioData"
+          )
+          .value =
+          "";
+
+
+        document
+          .getElementById(
+            "calendarioHorario"
+          )
+          .value =
+          "";
+
+
+        document
+          .getElementById(
+            "calendarioRefeicao"
+          )
+          .value =
+          "";
+
+
+        document
+          .getElementById(
+            "calendarioObservacao"
+          )
+          .value =
+          "";
+
+
+        carregarCalendario();
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        mensagem.textContent =
           erro &&
           erro.message
-        ) || "";
+            ? erro.message
+            : "Erro ao cadastrar no calendário.";
+      }
+    )
 
+    .cadastrarCalendario(
+      TOKEN,
+      {
+        data:
+          data,
+
+        horario:
+          horario,
+
+        id_refeicao:
+          idRefeicao,
+
+        observacao:
+          observacao
+      }
+    );
+}
+
+
+function carregarCalendario() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      renderizarCalendario
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        document
+          .getElementById(
+            "listaCalendario"
+          )
+          .innerHTML =
+          "<p class='error-message'>" +
+          escaparHTML(
+            erro &&
+            erro.message
+              ? erro.message
+              : "Erro ao carregar o calendário."
+          ) +
+          "</p>";
+      }
+    )
+
+    .listarCalendario(
+      TOKEN
+    );
+}
+
+
+function carregarSemanaAtual() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      renderizarCalendario
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        document
+          .getElementById(
+            "listaCalendario"
+          )
+          .innerHTML =
+          "<p class='error-message'>" +
+          escaparHTML(
+            erro &&
+            erro.message
+              ? erro.message
+              : "Erro ao carregar a semana."
+          ) +
+          "</p>";
+      }
+    )
+
+    .listarCalendario(
+      TOKEN,
+      {
+        semana:
+          true
+      }
+    );
+}
+
+
+function renderizarCalendario(
+  lista
+) {
+
+  var div =
+    document.getElementById(
+      "listaCalendario"
+    );
+
+
+  if (
+    !lista ||
+    !lista.length
+  ) {
+
+    div.innerHTML =
+      "<p>Nenhuma refeição cadastrada no calendário.</p>";
+
+    return;
+  }
+
+
+  var grupos = {};
+
+
+  lista.forEach(
+    function(item) {
 
       if (
-        mensagem.indexOf(
-          "Token não informado"
-        ) !== -1 ||
-
-        mensagem.indexOf(
-          "Sessão inválida"
-        ) !== -1 ||
-
-        mensagem.indexOf(
-          "Sessão expirada"
-        ) !== -1
+        !item ||
+        !item.data
       ) {
-
-        sessionStorage.clear();
-
-
-        alert(
-          "Sua sessão terminou. Faça login novamente."
-        );
-
-
-        carregarPagina(
-          "Index"
-        );
-
 
         return;
       }
 
 
-      if (elemento) {
+      var chave =
+        String(
+          item.data
+        );
 
-        elemento.innerHTML =
-          "<p class='error-message'>" +
 
-          escaparHTML(
-            mensagem ||
-            mensagemPadrao
-          ) +
+      if (
+        !grupos[chave]
+      ) {
 
-          "</p>";
+        grupos[chave] = {
 
-      } else {
+          data:
+            item.data,
+
+          dia:
+            item.dia_semana ||
+            nomeDiaSemana(
+              item.data
+            ),
+
+          itens:
+            []
+        };
+      }
+
+
+      grupos[chave]
+        .itens
+        .push(
+          item
+        );
+    }
+  );
+
+
+  var html =
+    '<div class="calendar-list">';
+
+
+  Object.keys(
+    grupos
+  )
+  .sort()
+  .forEach(
+    function(chave) {
+
+      var grupo =
+        grupos[chave];
+
+
+      grupo.itens.sort(
+        function(a, b) {
+
+          return String(
+            a.horario ||
+            ""
+          ).localeCompare(
+            String(
+              b.horario ||
+              ""
+            )
+          );
+        }
+      );
+
+
+      html +=
+        '<div class="calendar-item">';
+
+
+      html +=
+        "<h3>" +
+        "🍎 " +
+        escaparHTML(
+          grupo.dia
+        ) +
+        " — " +
+        escaparHTML(
+          formatarData(
+            grupo.data
+          )
+        ) +
+        "</h3>";
+
+
+      grupo.itens.forEach(
+        function(item) {
+
+          html +=
+            '<div class="calendar-meal-row">';
+
+
+          html +=
+            '<div class="calendar-time">' +
+            escaparHTML(
+              item.horario ||
+              "-"
+            ) +
+            "</div>";
+
+
+          html +=
+            '<div class="calendar-meal-content">';
+
+
+          html +=
+            '<strong>' +
+            escaparHTML(
+              item.refeicao ||
+              "Refeição"
+            ) +
+            "</strong>";
+
+
+          if (
+            item.cardapio
+          ) {
+
+            html +=
+              "<div>" +
+              escaparHTML(
+                item.cardapio
+              ) +
+              "</div>";
+          }
+
+
+          if (
+            item.observacao
+          ) {
+
+            html +=
+              '<div class="calendar-observation">' +
+              escaparHTML(
+                item.observacao
+              ) +
+              "</div>";
+          }
+
+
+          html +=
+            "</div>";
+
+
+          html +=
+            '<div class="calendar-actions">';
+
+
+          html +=
+            "<button " +
+            "class='btn-small btn-danger' " +
+            "onclick=\"excluirCalendario('" +
+            escaparJS(
+              item.id_calendario
+            ) +
+            "')\">" +
+            "Excluir" +
+            "</button>";
+
+
+          html +=
+            "</div>";
+
+
+          html +=
+            "</div>";
+        }
+      );
+
+
+      html +=
+        "</div>";
+    }
+  );
+
+
+  html +=
+    "</div>";
+
+
+  div.innerHTML =
+    html;
+}
+
+
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+
+function nomeDiaSemana(
+  data
+) {
+
+  var partes =
+    String(
+      data ||
+      ""
+    ).split(
+      "-"
+    );
+
+
+  if (
+    partes.length !==
+    3
+  ) {
+
+    return "";
+  }
+
+
+  var dataObj =
+    new Date(
+      Number(
+        partes[0]
+      ),
+      Number(
+        partes[1]
+      ) - 1,
+      Number(
+        partes[2]
+      )
+    );
+
+
+  var dias = [
+
+    "Domingo",
+
+    "Segunda-feira",
+
+    "Terça-feira",
+
+    "Quarta-feira",
+
+    "Quinta-feira",
+
+    "Sexta-feira",
+
+    "Sábado"
+
+  ];
+
+
+  return (
+    dias[
+      dataObj.getDay()
+    ] ||
+    ""
+  );
+}
+
+
+function formatarData(
+  data
+) {
+
+  var partes =
+    String(
+      data ||
+      ""
+    ).split(
+      "-"
+    );
+
+
+  if (
+    partes.length ===
+    3
+  ) {
+
+    return (
+      partes[2] +
+      "/" +
+      partes[1] +
+      "/" +
+      partes[0]
+    );
+  }
+
+
+  return String(
+    data ||
+    ""
+  );
+}
+
+
+function escaparHTML(
+  texto
+) {
+
+  var div =
+    document.createElement(
+      "div"
+    );
+
+
+  div.textContent =
+    texto == null
+      ? ""
+      : String(
+          texto
+        );
+
+
+  return div.innerHTML;
+}
+
+
+function escaparJS(
+  texto
+) {
+
+  return String(
+    texto ||
+    ""
+  )
+  .replace(
+    /\\/g,
+    "\\\\"
+  )
+  .replace(
+    /'/g,
+    "\\'"
+  )
+  .replace(
+    /"/g,
+    '\\"'
+  )
+  .replace(
+    /\r?\n/g,
+    "\\n"
+  );
+}
+
+
+function excluirCalendario(
+  idCalendario
+) {
+
+  if (
+    !idCalendario
+  ) {
+
+    return;
+  }
+
+
+  if (
+    !confirm(
+      "Deseja realmente excluir este registro do calendário?"
+    )
+  ) {
+
+    return;
+  }
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(resultado) {
 
         alert(
-          mensagem ||
-          mensagemPadrao
+          resultado.mensagem
+        );
+
+
+        carregarCalendario();
+      }
+    )
+
+    .withFailureHandler(
+      function(erro) {
+
+        alert(
+          erro &&
+          erro.message
+            ? erro.message
+            : "Não foi possível excluir o registro."
         );
       }
-    }
+    )
+
+    .excluirCalendario(
+      TOKEN,
+      idCalendario
+    );
+}
 
 
-    /**
-     * ========================================================
-     * CARREGAR PÁGINA
-     * ========================================================
-     */
-    function carregarPagina(
-      nomeArquivo
-    ) {
+function voltarInicio() {
 
-      google.script.run
-
-        .withSuccessHandler(
-          function(html) {
-
-            if (!html) {
-
-              alert(
-                "Página não encontrada."
-              );
-
-              return;
-            }
+  sessionStorage.clear();
 
 
-            document.open();
+  carregarPagina(
+    "Index"
+  );
+}
 
-            document.write(
-              html
-            );
 
-            document.close();
-          }
-        )
+function sair() {
 
-        .withFailureHandler(
-          function(erro) {
+  var token =
+    TOKEN;
 
-            alert(
-              (
-                erro &&
-                erro.message
-              ) ||
-              "Erro ao abrir a página."
-            );
-          }
-        )
 
-        .include(
-          nomeArquivo
+  sessionStorage.clear();
+
+
+  if (!token) {
+
+    carregarPagina(
+      "Index"
+    );
+
+    return;
+  }
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function() {
+
+        carregarPagina(
+          "Index"
         );
-    }
-
-
-    /**
-     * ========================================================
-     * DATA LOCAL
-     * ========================================================
-     */
-    function criarDataLocal(
-      valor
-    ) {
-
-      var partes =
-        String(
-          valor
-        ).split("-");
-
-
-      return new Date(
-        Number(partes[0]),
-        Number(partes[1]) - 1,
-        Number(partes[2])
-      );
-    }
-
-
-    /**
-     * ========================================================
-     * FORMATAR DATA PARA INPUT
-     * ========================================================
-     */
-    function formatarDataInput(
-      data
-    ) {
-
-      return (
-        String(
-          data.getFullYear()
-        ) +
-        "-" +
-        String(
-          data.getMonth() + 1
-        ).padStart(
-          2,
-          "0"
-        ) +
-        "-" +
-        String(
-          data.getDate()
-        ).padStart(
-          2,
-          "0"
-        )
-      );
-    }
-
-
-    /**
-     * ========================================================
-     * FORMATAR DATA VISUAL
-     * ========================================================
-     */
-    function formatarDataVisual(
-      data
-    ) {
-
-      return (
-        String(
-          data.getDate()
-        ).padStart(
-          2,
-          "0"
-        ) +
-        "/" +
-        String(
-          data.getMonth() + 1
-        ).padStart(
-          2,
-          "0"
-        ) +
-        "/" +
-        data.getFullYear()
-      );
-    }
-
-
-    /**
-     * ========================================================
-     * VERIFICAR DATA NO PERÍODO
-     * ========================================================
-     */
-    function dataDentroDoPeriodo(
-      dataTexto,
-      periodo
-    ) {
-
-      var data =
-        criarDataLocal(
-          dataTexto
-        );
-
-
-      var inicio =
-        criarDataLocal(
-          periodo.inicio
-        );
-
-
-      var fim =
-        criarDataLocal(
-          periodo.fim
-        );
-
-
-      data.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-
-      inicio.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-
-      fim.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-
-      return (
-        data >= inicio &&
-        data <= fim
-      );
-    }
-
-
-    /**
-     * ========================================================
-     * FORMATAR DATA DA LISTA
-     * ========================================================
-     */
-    function formatarData(
-      data
-    ) {
-
-      if (!data) {
-        return "";
       }
+    )
 
+    .withFailureHandler(
+      function() {
 
-      var texto =
-        String(
-          data
+        carregarPagina(
+          "Index"
         );
-
-
-      if (
-        texto.indexOf(
-          "T"
-        ) !== -1
-      ) {
-
-        return texto
-          .split("T")[0]
-          .split("-")
-          .reverse()
-          .join("/");
       }
+    )
+
+    .logout(
+      token
+    );
+}
 
 
-      return texto;
-    }
+inicializarGestao();
 
-
-    /**
-     * ========================================================
-     * NORMALIZAR HORÁRIO NO CLIENTE
-     * ========================================================
-     */
-    function normalizarHorarioCliente(
-      valor
-    ) {
-
-      if (
-        valor === undefined ||
-        valor === null
-      ) {
-
-        return "";
-      }
-
-
-      var texto =
-        String(
-          valor
-        ).trim();
-
-
-      var encontrado =
-        texto.match(
-          /(\d{1,2}):(\d{2})(?::\d{2})?/
-        );
-
-
-      if (!encontrado) {
-        return "";
-      }
-
-
-      return (
-        String(
-          encontrado[1]
-        ).padStart(
-          2,
-          "0"
-        ) +
-        ":" +
-        String(
-          encontrado[2]
-        ).padStart(
-          2,
-          "0"
-        )
-      );
-    }
-
-
-    /**
-     * ========================================================
-     * ESCAPAR HTML
-     * ========================================================
-     */
-    function escaparHTML(
-      texto
-    ) {
-
-      var div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.textContent =
-        texto === undefined ||
-        texto === null
-          ? ""
-          : String(texto);
-
-
-      return div.innerHTML;
-    }
-
-
-    /**
-     * ========================================================
-     * ESCAPAR ATRIBUTO
-     * ========================================================
-     */
-    function escaparAtributo(
-      texto
-    ) {
-
-      return String(
-        texto === undefined ||
-        texto === null
-          ? ""
-          : texto
-      )
-      .replace(
-        /\\/g,
-        "\\\\"
-      )
-      .replace(
-        /'/g,
-        "\\'"
-      );
-    }
-
-
-    inicializarGestao();
-
-  </script>
+</script>
 
 </body>
-
 </html>
