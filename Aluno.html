@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Escolar</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7f5;
+    color: #26332b;
+}
+
+header {
+    background: linear-gradient(135deg, #168a52, #0f6f42);
+    color: white;
+    padding: 30px 20px;
+    border-radius: 0 0 25px 25px;
+}
+
+header span {
+    font-size: 12px;
+    opacity: .8;
+}
+
+header h1 {
+    margin: 8px 0;
+}
+
+header p {
+    opacity: .9;
+}
+
+main {
+    max-width: 700px;
+    margin: auto;
+    padding: 25px 15px 50px;
+}
+
+h2 {
+    margin-bottom: 15px;
+}
+
+.dia {
+    background: white;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px #00000010;
+}
+
+.dia h3 {
+    background: #eaf6ee;
+    color: #146c43;
+    padding: 15px;
+}
+
+.refeicao {
+    display: flex;
+    gap: 15px;
+    padding: 14px 15px;
+    border-top: 1px solid #eee;
+}
+
+.horario {
+    color: #167448;
+    font-weight: bold;
+    min-width: 55px;
+}
+
+.tipo {
+    color: #777;
+    font-size: 12px;
+}
+
+.comida {
+    font-weight: bold;
+    display: block;
+    margin-top: 3px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    border: 0;
+    border-radius: 12px;
+    background: #176b43;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+small {
+    display: block;
+    text-align: center;
+    color: #777;
+    margin-top: 8px;
+}
+
+@media (max-width: 500px) {
+    header h1 {
+        font-size: 24px;
+    }
+
+    main {
+        padding: 20px 12px;
+    }
+}
+
+
+
+      </style>
+</head>
+
+<body>
+
+<header>
+    <span>MERENDA ESCOLAR</span>
+    <h1>Cardápio da Semana</h1>
+    <p>Confira as refeições da sua escola.</p>
+</header>
+
+<main>
+    <h2>Cardápio</h2>
+
+    <div id="cardapio"></div>
+
+    <button onclick="abrirLogin()">
+        🔐 Login da Gestão
+    </button>
+
+    <small>
+        Acesso exclusivo para a gestão escolar.
+    </small>
+</main>
+
+<script src="script.js"></script>
+
+</body>
+</html>
+
+
+
