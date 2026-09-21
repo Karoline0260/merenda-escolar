@@ -33,8 +33,10 @@ function doGet() {
  * INCLUIR HTML
  * ============================================================
  *
- * Usado pelo frontend para trocar de página.
- * Não executa nenhuma função protegida.
+ * Somente as páginas utilizadas pela aplicação atual podem
+ * ser carregadas dinamicamente.
+ *
+ * Área escolar foi desativada.
  * ============================================================
  */
 function include(nome) {
@@ -50,20 +52,37 @@ function include(nome) {
     );
   }
 
+
   var arquivo =
     String(nome).trim();
 
 
-  /*
-   * Permite somente nomes simples de arquivos.
-   * Evita caminhos inesperados.
-   */
   if (
     !/^[A-Za-z0-9_-]+$/.test(arquivo)
   ) {
 
     throw new Error(
       "Nome de arquivo inválido."
+    );
+  }
+
+
+  var paginasPermitidas = [
+    "Index",
+    "LoginGestao",
+    "Gestao",
+    "CSS"
+  ];
+
+
+  if (
+    paginasPermitidas.indexOf(
+      arquivo
+    ) === -1
+  ) {
+
+    throw new Error(
+      "Página não disponível neste sistema."
     );
   }
 
