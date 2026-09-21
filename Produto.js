@@ -1,87 +1,229 @@
+ /**
+  * ============================================================
+  * PRODUTO.GS
+  * Comidas / Produtos utilizados nas refeições.
+  * ============================================================
+  */
+
+
 /**
  * ============================================================
- * PRODUTO.GS
+ * LISTAR COMIDAS
  * ============================================================
  */
-
-function listarProdutos(token) {
-
+function listarComidas(
+    token
+  ) {
+  
     token =
-      normalizarToken(token);
+      normalizarToken(
+        token
+      );
+  
   
     verificarPermissao(
       token,
       "GESTAO"
     );
   
+  
     return (
-      getData("PRODUTOS") || []
+      getData(
+        "PRODUTOS"
+      ) || []
     );
   }
   
   
-  function cadastrarProduto(
-    token,
-    produto
+  /**
+   * ============================================================
+   * LISTAR COMIDAS ATIVAS
+   * ============================================================
+   */
+  function listarComidasAtivas(
+    token
   ) {
   
+    token =
+      normalizarToken(
+        token
+      );
+  
+  
+    verificarPermissao(
+      token,
+      "GESTAO"
+    );
+  
+  
+    var produtos =
+      getData(
+        "PRODUTOS"
+      ) || [];
+  
+  
+    return produtos.filter(
+      function(produto) {
+  
+        return (
+          produto &&
+          String(
+            produto.ativo ||
+            "SIM"
+          )
+          .trim()
+          .toUpperCase() ===
+          "SIM"
+        );
+      }
+    );
+  }
+  
+  
+  /**
+   * ============================================================
+   * CADASTRAR COMIDA
+   * ============================================================
+   *
+   * A interface chama "cadastrarComida".
+   *
+   * O banco continua utilizando a aba PRODUTOS.
+   * ============================================================
+   */
+  function cadastrarComida(
+    token,
+    comida
+  ) {
+  
+    /*
+     * Permite também chamada no formato:
+     *
+     * cadastrarComida({
+     *   token: "...",
+     *   comida: {...}
+     * })
+     */
     if (
       token &&
       typeof token === "object" &&
       !Array.isArray(token)
     ) {
   
-      var dados = token;
+      var dados =
+        token;
   
-      produto =
+  
+      comida =
+        dados.comida ||
         dados.produto ||
         dados.dados ||
         {};
   
+  
       token =
-        normalizarToken(dados);
+        normalizarToken(
+          dados
+        );
     }
   
+  
     token =
-      normalizarToken(token);
+      normalizarToken(
+        token
+      );
+  
   
     verificarPermissao(
       token,
       "GESTAO"
     );
   
+  
     if (
-      !produto ||
-      typeof produto !== "object" ||
-      Array.isArray(produto)
+      !comida ||
+      typeof comida !== "object" ||
+      Array.isArray(comida)
     ) {
   
       throw new Error(
-        "Dados do produto não informados."
+        "Dados da comida não informados."
       );
     }
   
+  
     var nome =
       String(
-        produto.nome || ""
+        comida.nome ||
+        ""
       ).trim();
+  
   
     var descricao =
       String(
-        produto.descricao || ""
+        comida.descricao ||
+        ""
       ).trim();
+  
   
     if (!nome) {
   
       throw new Error(
-        "O nome do produto é obrigatório."
+        "O nome da comida é obrigatório."
       );
     }
   
-    var novoProduto = {
+  
+    /*
+     * Evita cadastrar a mesma comida duas vezes.
+     */
+    var produtos =
+      getData(
+        "PRODUTOS"
+      ) || [];
+  
+  
+    var nomeNormalizado =
+      nome
+        .trim()
+        .toUpperCase();
+  
+  
+    var existente =
+      produtos.some(
+        function(produto) {
+  
+          if (!produto) {
+            return false;
+          }
+  
+  
+          return (
+            String(
+              produto.nome ||
+              ""
+            )
+            .trim()
+            .toUpperCase() ===
+            nomeNormalizado
+          );
+        }
+      );
+  
+  
+    if (existente) {
+  
+      throw new Error(
+        "Já existe uma comida cadastrada com este nome."
+      );
+    }
+  
+  
+    var novaComida = {
   
       id_produto:
-        gerarId("PROD"),
+        gerarId(
+          "PROD"
+        ),
   
       nome:
         nome,
@@ -96,28 +238,39 @@ function listarProdutos(token) {
         new Date()
     };
   
+  
     insertData(
       "PRODUTOS",
-      novoProduto
+      novaComida
     );
+  
   
     return {
   
-      sucesso: true,
+      sucesso:
+        true,
   
       mensagem:
-        "Produto cadastrado com sucesso.",
+        "Comida cadastrada com sucesso.",
+  
+      comida:
+        novaComida,
   
       produto:
-        novoProduto
+        novaComida
     };
   }
   
   
-  function atualizarProduto(
+  /**
+   * ============================================================
+   * ATUALIZAR COMIDA
+   * ============================================================
+   */
+  function atualizarComida(
     token,
-    idProduto,
-    produto
+    idComida,
+    comida
   ) {
   
     if (
@@ -126,74 +279,109 @@ function listarProdutos(token) {
       !Array.isArray(token)
     ) {
   
-      var dados = token;
+      var dados =
+        token;
   
-      idProduto =
+  
+      idComida =
+        dados.idComida ||
+        dados.id_comida ||
         dados.idProduto ||
         dados.id_produto;
   
-      produto =
+  
+      comida =
+        dados.comida ||
         dados.produto ||
         dados.dados ||
         {};
   
+  
       token =
-        normalizarToken(dados);
+        normalizarToken(
+          dados
+        );
     }
   
+  
     token =
-      normalizarToken(token);
+      normalizarToken(
+        token
+      );
+  
   
     verificarPermissao(
       token,
       "GESTAO"
     );
   
-    if (!idProduto) {
+  
+    if (!idComida) {
   
       throw new Error(
-        "ID do produto não informado."
+        "ID da comida não informado."
       );
     }
   
+  
     if (
-      !produto ||
-      typeof produto !== "object"
+      !comida ||
+      typeof comida !== "object" ||
+      Array.isArray(comida)
     ) {
   
       throw new Error(
-        "Dados do produto não informados."
+        "Dados da comida não informados."
       );
     }
   
+  
     var nome =
       String(
-        produto.nome || ""
+        comida.nome ||
+        ""
       ).trim();
+  
   
     var descricao =
       String(
-        produto.descricao || ""
+        comida.descricao ||
+        ""
       ).trim();
   
+  
     var ativo =
-      produto.ativo === undefined ||
-      produto.ativo === null ||
-      String(produto.ativo).trim() === ""
+      comida.ativo === undefined ||
+      comida.ativo === null ||
+      String(
+        comida.ativo
+      ).trim() === ""
+  
         ? "SIM"
-        : String(produto.ativo)
-            .trim()
-            .toUpperCase();
+  
+        : String(
+            comida.ativo
+          )
+          .trim()
+          .toUpperCase();
+  
   
     if (!nome) {
   
       throw new Error(
-        "O nome do produto é obrigatório."
+        "O nome da comida é obrigatório."
       );
     }
   
+  
     if (
-      ["SIM", "NAO"].indexOf(ativo) === -1
+      [
+        "SIM",
+        "NAO"
+      ]
+      .indexOf(
+        ativo
+      ) === -1
     ) {
   
       throw new Error(
@@ -201,10 +389,11 @@ function listarProdutos(token) {
       );
     }
   
+  
     updateData(
       "PRODUTOS",
       "id_produto",
-      idProduto,
+      idComida,
       {
   
         nome:
@@ -218,19 +407,26 @@ function listarProdutos(token) {
       }
     );
   
+  
     return {
   
-      sucesso: true,
+      sucesso:
+        true,
   
       mensagem:
-        "Produto atualizado com sucesso."
+        "Comida atualizada com sucesso."
     };
   }
   
   
-  function excluirProduto(
+  /**
+   * ============================================================
+   * EXCLUIR COMIDA
+   * ============================================================
+   */
+  function excluirComida(
     token,
-    idProduto
+    idComida
   ) {
   
     if (
@@ -239,33 +435,49 @@ function listarProdutos(token) {
       !Array.isArray(token)
     ) {
   
-      var dados = token;
+      var dados =
+        token;
   
-      idProduto =
+  
+      idComida =
+        dados.idComida ||
+        dados.id_comida ||
         dados.idProduto ||
         dados.id_produto;
   
+  
       token =
-        normalizarToken(dados);
+        normalizarToken(
+          dados
+        );
     }
   
+  
     token =
-      normalizarToken(token);
+      normalizarToken(
+        token
+      );
+  
   
     verificarPermissao(
       token,
       "GESTAO"
     );
   
-    if (!idProduto) {
+  
+    if (!idComida) {
   
       throw new Error(
-        "ID do produto não informado."
+        "ID da comida não informado."
       );
     }
   
+  
     var relacionamentos =
-      getData("REFEICAO_PRODUTO") || [];
+      getData(
+        "REFEICAO_PRODUTO"
+      ) || [];
+  
   
     var produtoEmUso =
       relacionamentos.some(
@@ -273,38 +485,52 @@ function listarProdutos(token) {
   
           return (
             item &&
-            String(item.id_produto || "") ===
-            String(idProduto)
+            String(
+              item.id_produto ||
+              ""
+            ).trim() ===
+            String(
+              idComida
+            ).trim()
           );
         }
       );
   
+  
     if (produtoEmUso) {
   
       throw new Error(
-        "Este produto está vinculado a uma refeição e não pode ser excluído."
+        "Esta comida está vinculada a uma refeição e não pode ser excluída."
       );
     }
+  
   
     deleteData(
       "PRODUTOS",
       "id_produto",
-      idProduto
+      idComida
     );
+  
   
     return {
   
-      sucesso: true,
+      sucesso:
+        true,
   
       mensagem:
-        "Produto excluído com sucesso."
+        "Comida excluída com sucesso."
     };
   }
   
   
-  function buscarProdutoPorId(
+  /**
+   * ============================================================
+   * BUSCAR COMIDA POR ID
+   * ============================================================
+   */
+  function buscarComidaPorId(
     token,
-    idProduto
+    idComida
   ) {
   
     if (
@@ -313,91 +539,130 @@ function listarProdutos(token) {
       !Array.isArray(token)
     ) {
   
-      var dados = token;
+      var dados =
+        token;
   
-      idProduto =
+  
+      idComida =
+        dados.idComida ||
+        dados.id_comida ||
         dados.idProduto ||
         dados.id_produto;
   
+  
       token =
-        normalizarToken(dados);
+        normalizarToken(
+          dados
+        );
     }
   
+  
     token =
-      normalizarToken(token);
+      normalizarToken(
+        token
+      );
+  
   
     verificarPermissao(
       token,
       "GESTAO"
     );
   
-    if (!idProduto) {
+  
+    if (!idComida) {
   
       throw new Error(
-        "ID do produto não informado."
+        "ID da comida não informado."
       );
     }
   
-    var produtos =
-      getData("PRODUTOS") || [];
   
-    var produto =
+    var produtos =
+      getData(
+        "PRODUTOS"
+      ) || [];
+  
+  
+    var comida =
       produtos.find(
         function(item) {
   
           return (
             item &&
             String(
-              item.id_produto || ""
-            ) === String(idProduto)
+              item.id_produto ||
+              ""
+            ).trim() ===
+            String(
+              idComida
+            ).trim()
           );
         }
       );
   
-    if (!produto) {
+  
+    if (!comida) {
   
       throw new Error(
-        "Produto não encontrado."
+        "Comida não encontrada."
       );
     }
   
-    return produto;
+  
+    return comida;
   }
   
   
-  function listarProdutosAtivos(token) {
+  /**
+   * ============================================================
+   * FUNÇÕES ANTIGAS / COMPATIBILIDADE
+   * ============================================================
+   */
   
-    token =
-      normalizarToken(token);
+  function listarProdutos(
+    token
+  ) {
   
-    verificarPermissao(
-      token,
-      "GESTAO"
-    );
-  
-    var produtos =
-      getData("PRODUTOS") || [];
-  
-    return produtos.filter(
-      function(produto) {
-  
-        return (
-          produto &&
-          String(
-            produto.ativo || ""
-          )
-          .trim()
-          .toUpperCase() ===
-          "SIM"
-        );
-      }
+    return listarComidas(
+      token
     );
   }
   
   
-  function testarProdutosBanco() {
+  function listarProdutosAtivos(
+    token
+  ) {
   
-    return (
-      getData("PRODUTOS") || []
+    return listarComidasAtivas(
+      token
     );
+  }
+  
+  
+  function cadastrarProduto(
+    token,
+    produto
+  ) {
+  
+    /*
+     * Reaproveita a função nova.
+     */
+    var resultado =
+      cadastrarComida(
+        token,
+        produto
+      );
+  
+  
+    return {
+  
+      sucesso:
+        resultado.sucesso,
+  
+      mensagem:
+        "Produto cadastrado com sucesso.",
+  
+      produto:
+        resultado.produto
+    };
   }
