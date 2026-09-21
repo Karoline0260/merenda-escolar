@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <?!= include("CSS"); ?>
+
+</head>
+
+<body>
+
+  <header class="cardapio-header">
+
+    <div class="cardapio-header-inner">
+
+      <span class="cardapio-marca">
+        MERENDA ESCOLAR
+      </span>
+
+      <h1>
+        Cardápio da Semana
+      </h1>
+
+      <p>
+        Confira as refeições programadas para sua escola.
+      </p>
+
+    </div>
+
+  </header>
+
+
+  <main class="cardapio-main">
+
+    <section>
+
+      <h2>
+        Cardápio
+      </h2>
+
+      <div
+        id="cardapio"
+        class="cardapio-list"
+      >
+        Carregando cardápio...
+      </div>
+
+    </section>
+
+
+    <section class="cardapio-login-section">
+
+      <button
+        class="cardapio-login-button"
+        onclick="abrirLogin()"
+      >
+        🔐 Login da Gestão
+      </button>
+
+      <small>
+        Acesso exclusivo para a gestão escolar.
+      </small>
+
+    </section>
+
+  </main>
+
+
+  <script>
+
+    function abrirLogin() {
+
+      carregarPagina(
+        "LoginGestao"
+      );
+
+    }
+
+
+    function carregarPagina(
+      nomeArquivo
+    ) {
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(html) {
+
+            if (!html) {
+
+              alert(
+                "A página solicitada não foi encontrada."
+              );
+
+              return;
+            }
+
+
+            document.open();
+
+            document.write(
+              html
+            );
+
+            document.close();
+
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            alert(
+              erro &&
+              erro.message
+                ? erro.message
+                : "Erro ao abrir a página."
+            );
+
+          }
+        )
+
+        .include(
+          nomeArquivo
+        );
+
+    }
+
+
+    function nomeDiaSemana(
+      data
+    ) {
+
+      var partes =
+        String(
+          data || ""
+        ).split("-");
+
+
+      if (
+        partes.length !== 3
+      ) {
+
+        return "";
+
+      }
+
+
+      var ano =
+        Number(
+          partes[0]
+        );
+
+      var mes =
+        Number(
+          partes[1]
+        ) - 1;
+
+      var dia =
+        Number(
+          partes[2]
+        );
+
+
+      var dataObj =
+        new Date(
+          ano,
+          mes,
+          dia
+        );
+
+
+      var dias = [
+        "Domingo",
+        "Segunda-feira",
+        "Terça-feira",
+        "Quarta-feira",
+        "Quinta-feira",
+        "Sexta-feira",
+        "Sábado"
+      ];
+
+
+      return (
+        dias[
+          dataObj.getDay()
+        ] || ""
+      );
+
+    }
+
+
+    function formatarData(
+      data
+    ) {
+
+      var partes =
+        String(
+          data || ""
+        ).split("-");
+
+
+      if (
+        partes.length === 3
+      ) {
+
+        return (
+          partes[2] +
+          "/" +
+          partes[1] +
+          "/" +
+          partes[0]
+        );
+
+      }
+
+
+      return String(
+        data || ""
+      );
+
+    }
+
+
+    function escaparHTML(
+      texto
+    ) {
+
+      var div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.textContent =
+        texto == null
+          ? ""
+          : String(texto);
+
+
+      return div.innerHTML;
+
+    }
+
+
+    function normalizarHorario(
+      valor
+    ) {
+
+      if (
+        valor === undefined ||
+        valor === null
+      ) {
+
+        return "";
+
+      }
+
+
+      var texto =
+        String(
+          valor
+        ).trim();
+
+
+      if (!texto) {
+
+        return "";
+
+      }
+
+
+      var resultado =
+        texto.match(
+          /(?:^|\s)(\d{1,2}):(\d{2})(?::\d{2})?/
+        );
+
+
+      if (
+        resultado
+      ) {
+
+        return (
+          String(
+            resultado[1]
+          ).padStart(
+            2,
+            "0"
+          ) +
+          ":" +
+          String(
+            resultado[2]
+          ).padStart(
+            2,
+            "0"
+          )
+        );
+
+      }
+
+
+      return texto;
+
+    }
+
+
+    function carregarCardapio() {
+
+      var container =
+        document.getElementById(
+          "cardapio"
+        );
+
+
+      container.innerHTML =
+        "Carregando cardápio...";
+
+
+      google.script.run
+
+        .withSuccessHandler(
+          function(lista) {
+
+            renderizarCardapio(
+              lista
+            );
+
+          }
+        )
+
+        .withFailureHandler(
+          function(erro) {
+
+            container.innerHTML =
+              '<p class="cardapio-erro">' +
+              escaparHTML(
+                erro &&
+                erro.message
+                  ? erro.message
+                  : "Erro ao carregar o cardápio."
+              ) +
+              "</p>";
+
+          }
+        )
+
+        .listarCardapioPublico();
+
+    }
+
+
+    function renderizarCardapio(
+      lista
+    ) {
+
+      var container =
+        document.getElementById(
+          "cardapio"
+        );
+
+
+      if (
+        !lista ||
+        !lista.length
+      ) {
+
+        container.innerHTML =
+          "<p>Nenhuma refeição programada para esta semana.</p>";
+
+        return;
+
+      }
+
+
+      var grupos = {};
+
+
+      lista.forEach(
+        function(item) {
+
+          if (
+            !item ||
+            !item.data
+          ) {
+
+            return;
+
+          }
+
+
+          var chave =
+            String(
+              item.data
+            );
+
+
+          if (
+            !grupos[chave]
+          ) {
+
+            grupos[chave] = {
+
+              data:
+                item.data,
+
+              dia:
+                nomeDiaSemana(
+                  item.data
+                ),
+
+              itens:
+                []
+
+            };
+
+          }
+
+
+          grupos[chave]
+            .itens
+            .push(
+              item
+            );
+
+        }
+      );
+
+
+      var html =
+        "";
+
+
+      Object.keys(
+        grupos
+      )
+      .sort()
+      .forEach(
+        function(chave) {
+
+          var grupo =
+            grupos[chave];
+
+
+          html +=
+            '<section class="dia">';
+
+
+          html +=
+            "<h3>" +
+            "🍎 " +
+            escaparHTML(
+              grupo.dia
+            ) +
+            " — " +
+            formatarData(
+              grupo.data
+            ) +
+            "</h3>";
+
+
+          grupo.itens.sort(
+            function(a, b) {
+
+              return (
+                normalizarHorario(
+                  a.horario
+                ).localeCompare(
+                  normalizarHorario(
+                    b.horario
+                  )
+                )
+              );
+
+            }
+          );
+
+
+          grupo.itens.forEach(
+            function(refeicao) {
+
+              html +=
+                '<div class="refeicao">';
+
+
+              html +=
+                '<div class="horario">' +
+                escaparHTML(
+                  normalizarHorario(
+                    refeicao.horario
+                  ) ||
+                  refeicao.periodo ||
+                  "-"
+                ) +
+                "</div>";
+
+
+              html +=
+                "<div>";
+
+
+              html +=
+                '<div class="tipo">' +
+                escaparHTML(
+                  refeicao.refeicao ||
+                  "Refeição"
+                ) +
+                "</div>";
+
+
+              html +=
+                '<span class="comida">' +
+                escaparHTML(
+                  refeicao.cardapio ||
+                  "Cardápio não informado"
+                ) +
+                "</span>";
+
+
+              if (
+                refeicao.observacao
+              ) {
+
+                html +=
+                  '<div class="cardapio-observacao">' +
+                  escaparHTML(
+                    refeicao.observacao
+                  ) +
+                  "</div>";
+
+              }
+
+
+              html +=
+                "</div>";
+
+
+              html +=
+                "</div>";
+
+            }
+          );
+
+
+          html +=
+            "</section>";
+
+        }
+      );
+
+
+      if (!html) {
+
+        container.innerHTML =
+          "<p>Nenhuma refeição programada para esta semana.</p>";
+
+        return;
+
+      }
+
+
+      container.innerHTML =
+        html;
+
+    }
+
+
+    carregarCardapio();
+
+  </script>
+
+</body>
+
+</html>
