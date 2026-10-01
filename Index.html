@@ -1,144 +1,165 @@
-<!--adicionei um comentário-->
 <!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-
-  <base target="_top">
-
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <?!= include("CSS"); ?>
-
-</head>
-
+<html lang="pt-BR"><head><base target="_top"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestão Alimentar Escolar</title>
+<style><?!= include('Style') ?></style></head>
 <body>
+<!-- AUTENTICAÇÃO -->
+<section id="auth"><div class="card">
+ <h2>🍎 Alimentação Escolar</h2>
+ <form id="f-login"><label>E-mail</label><input name="email" type="email" required>
+  <label>Senha</label><input name="senha" type="password" required>
+  <button type="submit" class="azul">Entrar</button>
+  <div class="links"><a data-v="f-register">Criar conta</a><a data-v="f-forgot">Esqueci a senha</a></div></form>
+ <form id="f-register" class="hidden"><h3>Novo cadastro</h3>
+  <label>Nome</label><input name="nome" required><label>E-mail</label><input name="email" type="email" required>
+  <label>Senha (mín. 6)</label><input name="senha" type="password" minlength="6" required>
+  <button type="submit">Cadastrar</button><div class="links"><a data-v="f-login">Voltar</a></div></form>
+ <form id="f-forgot" class="hidden"><h3>Recuperar senha</h3>
+  <label>E-mail cadastrado</label><input name="email" type="email" required>
+  <button type="submit" class="azul">Enviar código</button>
+  <div class="links"><a data-v="f-reset">Já tenho o código</a><a data-v="f-login">Voltar</a></div></form>
+ <form id="f-reset" class="hidden"><h3>Nova senha</h3>
+  <label>E-mail</label><input name="email" type="email" required><label>Código recebido</label><input name="code" required>
+  <label>Nova senha</label><input name="nova" type="password" minlength="6" required>
+  <button type="submit">Redefinir</button><div class="links"><a data-v="f-login">Voltar</a></div></form>
+ <div id="amsg" class="msg hidden"></div>
+</div></section>
 
-  <div class="container">
+<!-- APLICAÇÃO -->
+<section id="app" class="hidden">
+ <header><h1>🍎 Gestão Alimentar Escolar</h1><div><span id="quem"></span> <button id="sair">Sair</button></div></header>
+ <nav id="nav"></nav><main id="main"></main>
+</section>
+<dialog id="dlg"><form id="dform"></form></dialog>
 
-    <div class="card home-card">
+<script>
+let S=null, D={};
+const $=s=>document.querySelector(s);
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const call=(action,data)=>new Promise(r=>google.script.run.withSuccessHandler(r)
+  .withFailureHandler(e=>r({ok:false,error:e.message})).apiCall({action,token:S&&S.token,data:data||{}}));
+function msg(el,t,ok){el.textContent=t;el.className='msg '+(ok?'ok':'err');}
 
-      <div class="logo">
-        🍎
-      </div>
+/* Entidades CRUD */
+const SIMNAO=['sim','nao'], PERIODOS=['Café da manhã','Lanche da manhã','Almoço','Lanche da tarde','Jantar'];
+const E={
+ USUARIOS:{t:'Usuários',id:'id_usuario',cols:['nome','email','perfil','ativo'],f:[
+  {k:'nome',l:'Nome'},{k:'email',l:'E-mail',t:'email'},{k:'senha',l:'Senha (em branco = manter)',t:'password'},
+  {k:'perfil',l:'Perfil',o:['usuario','gestao']},{k:'ativo',l:'Ativo',o:SIMNAO}]},
+ ESCOLAS:{t:'Escolas',id:'id_escola',cols:['nome','endereco','ativo'],f:[
+  {k:'nome',l:'Nome'},{k:'endereco',l:'Endereço'},{k:'ativo',l:'Ativo',o:SIMNAO}]},
+ PRODUTOS:{t:'Produtos',id:'id_produto',cols:['nome','descricao','ativo','data_cadastro'],f:[
+  {k:'nome',l:'Nome'},{k:'descricao',l:'Descrição',t:'textarea'},{k:'ativo',l:'Ativo',o:SIMNAO}]},
+ REFEICOES:{t:'Receitas',id:'id_refeicao',cols:['nome','descricao','ativo'],ing:1,f:[
+  {k:'nome',l:'Nome'},{k:'descricao',l:'Descrição / modo de preparo',t:'textarea'},{k:'ativo',l:'Ativo',o:SIMNAO}]},
+ CALENDARIO:{t:'Cardápio',id:'id_calendario',cols:['data','horario','periodo','refeicao','observacao'],f:[
+  {k:'data',l:'Data',t:'date'},{k:'periodo',l:'Período',o:PERIODOS},{k:'horario',l:'Horário',t:'time'},
+  {k:'id_refeicao',l:'Receita',o:'REFEICOES'},{k:'observacao',l:'Observação',t:'textarea'}]}
+};
 
-      <h1>
-        Merenda Escolar
-      </h1>
+/* Autenticação */
+document.querySelectorAll('[data-v]').forEach(a=>a.onclick=()=>{
+  ['f-login','f-register','f-forgot','f-reset'].forEach(i=>$('#'+i).classList.toggle('hidden',i!==a.dataset.v));
+  $('#amsg').classList.add('hidden');});
+const formData=f=>Object.fromEntries(new FormData(f));
+[['f-login','login'],['f-register','register'],['f-forgot','forgot'],['f-reset','reset']].forEach(([id,act])=>{
+ $('#'+id).onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;
+  const r=await call(act,formData(f));b.disabled=false;const m=$('#amsg');
+  if(!r.ok)return msg(m,r.error);
+  if(act==='login'){S=r.data;start();}
+  else{msg(m,typeof r.data==='string'?r.data:'Cadastro realizado! Faça login.',1);f.reset();
+   if(act!=='forgot')$('[data-v=f-login]').click(),msg(m,typeof r.data==='string'?r.data:'Cadastro realizado! Faça login.',1);
+   else $('[data-v=f-reset]').click(),msg(m,r.data,1);m.classList.remove('hidden');}
+  m.classList.remove('hidden');};});
+$('#sair').onclick=async()=>{await call('logout');S=null;location.reload();};
 
-      <p class="subtitle">
-        Sistema de Calendário de Merenda Escolar
-      </p>
+function start(){
+ $('#auth').classList.add('hidden');$('#app').classList.remove('hidden');
+ $('#quem').textContent=S.nome+' ('+S.perfil+')';
+ const g=S.perfil==='gestao';
+ const items=g?[['dash','Dashboard'],['CALENDARIO','Cardápio'],['REFEICOES','Receitas'],['PRODUTOS','Produtos'],['ESCOLAS','Escolas'],['USUARIOS','Usuários']]:[['cardapio','Consultar cardápio']];
+ $('#nav').innerHTML=items.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join('');
+ $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.k));
+ go(items[0][0]);
+}
+async function go(k){
+ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+ $('#main').innerHTML='<p>Carregando…</p>';
+ if(k==='dash')return dash(); if(k==='cardapio')return cardapio(); return crud(k);
+}
 
+/* Dashboard (gestão) */
+async function dash(){
+ const r=await call('dashboard');if(!r.ok)return $('#main').innerHTML=`<div class="msg err">${esc(r.error)}</div>`;
+ const d=r.data,k=[['Usuários',d.usuarios],['Alunos/usuários',d.alunos],['Gestores',d.gestores],['Produtos',d.produtos],['Receitas',d.refeicoes],['Escolas',d.escolas]];
+ $('#main').innerHTML=`<div class="grid">${k.map(x=>`<div class="kpi">${x[0]}<b>${x[1]}</b></div>`).join('')}</div>
+ <div class="panel"><h3>Próximas refeições</h3>${tbl(['Data','Horário','Período','Receita'],d.proximos.map(c=>[c.data,c.horario,c.periodo,c.refeicao]))}</div>
+ <div class="panel"><h3>Produtos mais usados em receitas</h3>${tbl(['Produto','Receitas'],d.topProdutos.map(p=>[p.nome,p.usos]))}</div>`;
+}
+const tbl=(h,rows)=>`<table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${h.length}">Nenhum registro.</td></tr>`}</tbody></table>`;
 
-      <button
-        class="btn-primary btn-large"
-        onclick="abrirLoginEscolar()"
-      >
-        🏫 Área Escolar
-      </button>
+/* Consulta de cardápio (usuário) */
+async function cardapio(){
+ const hoje=new Date().toISOString().slice(0,10);
+ $('#main').innerHTML=`<div class="panel"><div class="filtro"><div><label>De</label><input type="date" id="de" value="${hoje}"></div>
+ <div><label>Até</label><input type="date" id="ate"></div><button id="bf">Filtrar</button></div></div><div id="lista"></div>`;
+ const load=async()=>{const r=await call('cardapio',{de:$('#de').value,ate:$('#ate').value});
+  $('#lista').innerHTML=!r.ok?`<div class="msg err">${esc(r.error)}</div>`:r.data.length?r.data.map(c=>`<div class="panel">
+   <b>${esc(c.data)} • ${esc(c.periodo)} ${esc(c.horario)}</b><h3>${esc(c.refeicao)}</h3><p>${esc(c.descricao)}</p>
+   ${c.ingredientes.map(i=>`<span class="tag">${esc(i)}</span>`).join('')}${c.observacao?`<p><i>Obs.: ${esc(c.observacao)}</i></p>`:''}</div>`).join(''):'<div class="panel">Nenhum cardápio no período.</div>';};
+ $('#bf').onclick=load;load();
+}
 
+/* CRUD genérico */
+async function refs(){ // carrega listas auxiliares
+ for(const n of['REFEICOES','PRODUTOS']){const r=await call('list',{sheet:n});D[n]=r.ok?r.data:[];}
+}
+async function crud(sh){
+ const c=E[sh];await refs();const r=await call('list',{sheet:sh});
+ if(!r.ok)return $('#main').innerHTML=`<div class="msg err">${esc(r.error)}</div>`;
+ D[sh]=r.data;const nome=id=>(D.REFEICOES.find(x=>x.id_refeicao==id)||{}).nome||'-';
+ const val=(row,k)=>k==='refeicao'?nome(row.id_refeicao):row[k];
+ $('#main').innerHTML=`<div class="bar"><h2>${c.t}</h2><button id="novo">+ Novo</button></div><div class="panel"><table><thead><tr>${c.cols.map(x=>`<th>${x.replace('_',' ')}</th>`).join('')}<th></th></tr></thead><tbody>
+ ${r.data.map(row=>`<tr>${c.cols.map(k=>`<td>${k==='ativo'?`<span class="tag ${row[k]==='sim'?'':'nao'}">${esc(row[k])}</span>`:esc(val(row,k))}</td>`).join('')}
+ <td class="ac">${c.ing?`<button class="sm azul" data-i="${row[c.id]}">Ingredientes</button>`:''}<button class="sm sec" data-e="${row[c.id]}">Editar</button><button class="sm del" data-d="${row[c.id]}">Excluir</button></td></tr>`).join('')||`<tr><td colspan="9">Nenhum registro.</td></tr>`}</tbody></table></div>`;
+ $('#novo').onclick=()=>form(sh);
+ $('#main').querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>form(sh,D[sh].find(x=>x[c.id]==b.dataset.e)));
+ $('#main').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>ingredientes(b.dataset.i));
+ $('#main').querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{
+  if(!confirm('Excluir este registro e seus vínculos?'))return;
+  const x=await call('remove',{sheet:sh,id:b.dataset.d});x.ok?crud(sh):alert(x.error);});
+}
+function form(sh,row){
+ const c=E[sh],v=row||{};
+ $('#dform').innerHTML=`<h3>${row?'Editar':'Novo'} — ${c.t}</h3>`+c.f.map(f=>{
+  let inp;const val=f.t==='password'?'':esc(v[f.k]);
+  if(f.o){const opts=f.o==='REFEICOES'?D.REFEICOES.map(x=>[x.id_refeicao,x.nome]):f.o.map(x=>[x,x]);
+   inp=`<select name="${f.k}" required>${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v[f.k]?'selected':''}>${esc(b)}</option>`).join('')}</select>`;}
+  else if(f.t==='textarea')inp=`<textarea name="${f.k}" rows="3">${val}</textarea>`;
+  else inp=`<input name="${f.k}" type="${f.t||'text'}" value="${val}" ${f.t==='password'?(row?'':'required minlength="6"'):'required'}>`;
+  return `<label>${f.l}</label>${inp}`;}).join('')+
+  `<div id="dmsg"></div><button type="submit">Salvar</button><button type="button" class="sec" style="width:100%;margin-top:.5rem" onclick="$('#dlg').close()">Cancelar</button>`;
+ $('#dform').onsubmit=async e=>{e.preventDefault();const obj={...v,...formData(e.target)};
+  const r=await call(row?'update':'create',{sheet:sh,obj});
+  if(!r.ok)return msg($('#dmsg'),r.error);$('#dlg').close();crud(sh);};
+ $('#dlg').showModal();
+}
 
-      <button
-        class="btn-secondary btn-large"
-        onclick="abrirLoginGestao()"
-      >
-        👩‍💼 Área da Gestão
-      </button>
-
-
-      <button
-        class="btn-back btn-large"
-        onclick="abrirCadastro()"
-      >
-        📝 Criar cadastro
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <script>
-
-    function carregarPagina(
-      nomeArquivo
-    ) {
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(html) {
-
-            if (!html) {
-
-              alert(
-                "A página solicitada não foi encontrada."
-              );
-
-              return;
-            }
-
-
-            document.open();
-
-            document.write(
-              html
-            );
-
-            document.close();
-          }
-        )
-
-        .withFailureHandler(
-          function(erro) {
-
-            alert(
-              (
-                erro &&
-                erro.message
-              ) ||
-              "Erro ao abrir a página."
-            );
-          }
-        )
-
-        .include(
-          nomeArquivo
-        );
-    }
-
-
-    function abrirLoginEscolar() {
-
-      carregarPagina(
-        "LoginAluno"
-      );
-    }
-
-
-    function abrirLoginGestao() {
-
-      carregarPagina(
-        "LoginGestao"
-      );
-    }
-
-
-    function abrirCadastro() {
-
-      carregarPagina(
-        "Cadastro"
-      );
-    }
-
-  </script>
-
-</body>
-
-</html>
+/* Ingredientes da receita (REFEICAO_PRODUTO - CRUD) */
+async function ingredientes(idRef){
+ const r=await call('list',{sheet:'REFEICAO_PRODUTO'});const lista=(r.data||[]).filter(x=>x.id_refeicao==idRef);
+ const pn=id=>(D.PRODUTOS.find(p=>p.id_produto==id)||{}).nome||'?';
+ $('#dform').innerHTML=`<h3>Ingredientes</h3>${lista.map(i=>`<div class="bar"><span>${esc(pn(i.id_produto))} — ${esc(i.quantidade)} ${i.observacao?'('+esc(i.observacao)+')':''}</span>
+  <span><button type="button" class="sm sec" data-ed="${i.id_refeicao_produto}">Qtd</button> <button type="button" class="sm del" data-rm="${i.id_refeicao_produto}">✕</button></span></div>`).join('')||'<p>Sem ingredientes.</p>'}
+  <hr><label>Produto</label><select name="id_produto">${D.PRODUTOS.map(p=>`<option value="${esc(p.id_produto)}">${esc(p.nome)}</option>`).join('')}</select>
+  <label>Quantidade</label><input name="quantidade" required><label>Observação</label><input name="observacao">
+  <div id="dmsg"></div><button type="submit">Adicionar</button><button type="button" class="sec" style="width:100%;margin-top:.5rem" onclick="$('#dlg').close()">Fechar</button>`;
+ $('#dform').onsubmit=async e=>{e.preventDefault();const x=await call('create',{sheet:'REFEICAO_PRODUTO',obj:{...formData(e.target),id_refeicao:idRef}});
+  x.ok?ingredientes(idRef):msg($('#dmsg'),x.error);};
+ $('#dform').querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{await call('remove',{sheet:'REFEICAO_PRODUTO',id:b.dataset.rm});ingredientes(idRef);});
+ $('#dform').querySelectorAll('[data-ed]').forEach(b=>b.onclick=async()=>{const i=lista.find(x=>x.id_refeicao_produto==b.dataset.ed);
+  const q=prompt('Nova quantidade:',i.quantidade);if(q===null)return;await call('update',{sheet:'REFEICAO_PRODUTO',obj:{...i,quantidade:q}});ingredientes(idRef);});
+ if(!$('#dlg').open)$('#dlg').showModal();
+}
+</script></body></html>
