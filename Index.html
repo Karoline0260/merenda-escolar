@@ -1,144 +1,770 @@
-<!--adicionei um comentário-->
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
   <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <meta charset="UTF-8">
+  <title>Gestão Alimentar Escolar</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <?!= include("CSS"); ?>
-
+  <style><?!= include('Style') ?></style>
 </head>
 
 <body>
 
-  <div class="container">
+<!-- VISÃO PÚBLICA (TELA INICIAL PARA ALUNOS) -->
+<section id="public-view">
+  <header>
+    <h1>🍎 Cardápio Escolar</h1>
+    <div>
+      <button id="btn-show-login" class="sec">Fazer Login</button>
+    </div>
+  </header>
+  <main id="public-main" style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+    <p>Carregando cardápio atualizado...</p>
+  </main>
+</section>
 
-    <div class="card home-card">
+<!-- AUTENTICAÇÃO -->
+<section id="auth" class="hidden">
+  <div class="card">
+    <h2>🍎 Alimentação Escolar</h2>
 
-      <div class="logo">
-        🍎
+    <form id="f-login">
+      <label>E-mail</label>
+      <input name="email" type="email" required>
+
+      <label>Senha</label>
+      <input name="senha" type="password" required>
+
+      <button type="submit" class="azul">Entrar</button>
+
+      <div class="links">
+        <a data-v="f-register">Criar conta</a>
+        <a data-v="f-forgot">Esqueci a senha</a>
+        <a id="btn-voltar-publico" style="width: 100%; text-align: center; margin-top: 15px; color: var(--txt); text-decoration: none; cursor: pointer;">&larr; Voltar ao Cardápio</a>
       </div>
+    </form>
 
-      <h1>
-        Merenda Escolar
-      </h1>
+    <form id="f-register" class="hidden">
+      <h3>Novo cadastro</h3>
 
-      <p class="subtitle">
-        Sistema de Calendário de Merenda Escolar
-      </p>
+      <label>Nome</label>
+      <input name="nome" required>
 
+      <label>E-mail</label>
+      <input name="email" type="email" required>
 
-      <button
-        class="btn-primary btn-large"
-        onclick="abrirLoginEscolar()"
-      >
-        🏫 Área Escolar
-      </button>
+      <label>Senha (mín. 6)</label>
+      <input name="senha" type="password" minlength="6" required>
 
+      <button type="submit">Cadastrar</button>
 
-      <button
-        class="btn-secondary btn-large"
-        onclick="abrirLoginGestao()"
-      >
-        👩‍💼 Área da Gestão
-      </button>
+      <div class="links">
+        <a data-v="f-login">Voltar</a>
+      </div>
+    </form>
 
+    <form id="f-forgot" class="hidden">
+      <h3>Recuperar senha</h3>
 
-      <button
-        class="btn-back btn-large"
-        onclick="abrirCadastro()"
-      >
-        📝 Criar cadastro
-      </button>
+      <label>E-mail cadastrado</label>
+      <input name="email" type="email" required>
 
+      <button type="submit" class="azul">Enviar código</button>
+
+      <div class="links">
+        <a data-v="f-reset">Já tenho o código</a>
+        <a data-v="f-login">Voltar</a>
+      </div>
+    </form>
+
+    <form id="f-reset" class="hidden">
+      <h3>Nova senha</h3>
+
+      <label>E-mail</label>
+      <input name="email" type="email" required>
+
+      <label>Código recebido</label>
+      <input name="code" required>
+
+      <label>Nova senha</label>
+      <input name="nova" type="password" minlength="6" required>
+
+      <button type="submit">Redefinir</button>
+
+      <div class="links">
+        <a data-v="f-login">Voltar</a>
+      </div>
+    </form>
+
+    <div id="amsg" class="msg hidden"></div>
+  </div>
+</section>
+
+<!-- APLICAÇÃO (ÁREA LOGADA) -->
+<section id="app" class="hidden">
+  <header>
+    <h1>🍎 Gestão Alimentar Escolar</h1>
+
+    <div>
+      <span id="quem"></span>
+      <button id="sair">Sair</button>
+    </div>
+  </header>
+
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</section>
+
+<dialog id="dlg">
+  <form id="dform"></form>
+</dialog>
+
+<script>
+let S = null;
+let D = {};
+
+const $ = s => document.querySelector(s);
+
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+}[c]));
+
+const call = (action, data) => new Promise(resolve => {
+  google.script.run
+    .withSuccessHandler(resolve)
+    .withFailureHandler(e => resolve({
+      ok: false,
+      error: e.message
+    }))
+    .apiCall({
+      action: action,
+      token: S && S.token,
+      data: data || {}
+    });
+});
+
+function msg(el, texto, sucesso) {
+  el.textContent = texto;
+  el.className = 'msg ' + (sucesso ? 'ok' : 'err');
+}
+
+/* ---------------- Inicialização Pública (Cardápio dos Alunos) ---------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  carregarCardapioPublico();
+});
+
+async function carregarCardapioPublico() {
+  const container = $('#public-main');
+  container.innerHTML = '<p>Carregando cardápio atualizado...</p>';
+
+  const agora = new Date();
+  const hoje = [
+    agora.getFullYear(),
+    String(agora.getMonth() + 1).padStart(2, '0'),
+    String(agora.getDate()).padStart(2, '0')
+  ].join('-');
+
+  const futuro = new Date();
+  futuro.setDate(agora.getDate() + 30);
+  const ateData = [
+    futuro.getFullYear(),
+    String(futuro.getMonth() + 1).padStart(2, '0'),
+    String(futuro.getDate()).padStart(2, '0')
+  ].join('-');
+
+  // Primeira tentativa com limite de 30 dias
+  let resposta = await call('cardapio', { de: hoje, ate: ateData });
+
+  // Se não houver retorno com 'ateData', tenta com 'ate' vazio
+  if (!resposta.ok || !resposta.data || resposta.data.length === 0) {
+    const respostaAlt = await call('cardapio', { de: hoje, ate: '' });
+    if (respostaAlt.ok && respostaAlt.data && respostaAlt.data.length > 0) {
+      resposta = respostaAlt;
+    }
+  }
+
+  if (!resposta.ok) {
+    container.innerHTML = `<div class="msg err">${esc(resposta.error || 'Erro ao carregar o cardápio.')}</div>`;
+    return;
+  }
+
+  const dados = resposta.data || [];
+
+  if (dados.length === 0) {
+    container.innerHTML = `<div class="panel">Nenhum cardápio programado para os próximos dias.</div>`;
+    return;
+  }
+
+  container.innerHTML = dados.map(c => `
+    <div class="panel" style="border-left: 5px solid var(--verde); margin-bottom: 1rem;">
+      <b style="color: var(--azul-esc); font-size: 1.1rem; display: block; margin-bottom: 0.5rem;">
+        📅 ${esc(c.data)} • ${esc(c.periodo)} — ${esc(c.horario)}
+      </b>
+
+      <h3 style="margin: 0.5rem 0; color: var(--verde-esc);">${esc(c.refeicao)}</h3>
+      <p style="margin: 0; font-size: 0.95rem;">${esc(c.descricao)}</p>
+
+      ${c.observacao
+        ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: #555;"><i>⚠️ Obs.: ${esc(c.observacao)}</i></p>`
+        : ''
+      }
+    </div>
+  `).join('');
+}
+
+$('#btn-show-login').onclick = () => {
+  $('#public-view').classList.add('hidden');
+  $('#auth').classList.remove('hidden');
+};
+
+$('#btn-voltar-publico').onclick = () => {
+  $('#auth').classList.add('hidden');
+  $('#public-view').classList.remove('hidden');
+  $('#amsg').classList.add('hidden');
+};
+
+/* ---------------- Entidades ---------------- */
+
+const SIMNAO = ['sim', 'nao'];
+
+const PERIODOS = [
+  'Café da manhã',
+  'Lanche da manhã',
+  'Almoço',
+  'Lanche da tarde',
+  'Jantar'
+];
+
+const E = {
+  USUARIOS: {
+    t: 'Usuários',
+    id: 'id_usuario',
+    cols: ['nome', 'email', 'perfil', 'ativo'],
+    f: [
+      { k: 'nome', l: 'Nome' },
+      { k: 'email', l: 'E-mail', t: 'email' },
+      { k: 'senha', l: 'Senha (em branco = manter)', t: 'password' },
+      { k: 'perfil', l: 'Perfil', o: ['usuario', 'gestao'] },
+      { k: 'ativo', l: 'Ativo', o: SIMNAO }
+    ]
+  },
+
+  REFEICOES: {
+    t: 'Refeições',
+    id: 'id_refeicao',
+    cols: ['nome', 'descricao', 'ativo'],
+    f: [
+      { k: 'nome', l: 'Nome' },
+      { k: 'descricao', l: 'Descrição / modo de preparo', t: 'textarea' },
+      { k: 'ativo', l: 'Ativo', o: SIMNAO }
+    ]
+  },
+
+  CALENDARIO: {
+    t: 'Cardápio',
+    id: 'id_calendario',
+    cols: ['data', 'horario', 'periodo', 'refeicao', 'observacao'],
+    f: [
+      { k: 'data', l: 'Data', t: 'date' },
+      { k: 'periodo', l: 'Período', o: PERIODOS },
+      { k: 'horario', l: 'Horário', t: 'time' },
+      { k: 'id_refeicao', l: 'Refeição', o: 'REFEICOES' },
+      { k: 'observacao', l: 'Observação', t: 'textarea' }
+    ]
+  }
+};
+
+/* ---------------- Autenticação ---------------- */
+
+document.querySelectorAll('[data-v]').forEach(a => {
+  a.onclick = () => {
+    [
+      'f-login',
+      'f-register',
+      'f-forgot',
+      'f-reset'
+    ].forEach(id => {
+      $('#' + id).classList.toggle(
+        'hidden',
+        id !== a.dataset.v
+      );
+    });
+
+    $('#amsg').classList.add('hidden');
+  };
+});
+
+const formData = form =>
+  Object.fromEntries(new FormData(form));
+
+[
+  ['f-login', 'login'],
+  ['f-register', 'register'],
+  ['f-forgot', 'forgot'],
+  ['f-reset', 'reset']
+].forEach(([id, action]) => {
+  $('#' + id).onsubmit = async e => {
+    e.preventDefault();
+
+    const form = e.target;
+    const botao = form.querySelector('[type=submit]');
+    const areaMensagem = $('#amsg');
+
+    botao.disabled = true;
+
+    const resposta = await call(action, formData(form));
+
+    botao.disabled = false;
+
+    if (!resposta.ok) {
+      areaMensagem.classList.remove('hidden');
+      return msg(areaMensagem, resposta.error, false);
+    }
+
+    if (action === 'login') {
+      S = resposta.data;
+      $('#auth').classList.add('hidden');
+      start(); 
+      return;
+    }
+
+    const texto = typeof resposta.data === 'string'
+      ? resposta.data
+      : 'Cadastro realizado! Faça login.';
+
+    form.reset();
+
+    if (action !== 'forgot') {
+      $('[data-v=f-login]').click();
+      msg(areaMensagem, texto, true);
+    } else {
+      $('[data-v=f-reset]').click();
+      msg(areaMensagem, resposta.data, true);
+    }
+
+    areaMensagem.classList.remove('hidden');
+  };
+});
+
+$('#sair').onclick = async () => {
+  await call('logout');
+  S = null;
+  location.reload();
+};
+
+/* ---------------- Navegação (Logada) ---------------- */
+
+function start() {
+  $('#app').classList.remove('hidden');
+
+  $('#quem').textContent = S.nome + ' (' + S.perfil + ')';
+
+  const gestao = S.perfil === 'gestao';
+
+ const items = gestao
+  ? [
+      ['CALENDARIO', 'Cardápio'],
+      ['REFEICOES', 'Refeições'],
+      ['dash', 'Dashboard'],
+      ['USUARIOS', 'Usuários']
+    ]
+  : [
+      ['cardapio', 'Consultar cardápio']
+    ];
+
+  $('#nav').innerHTML = items.map(([key, titulo]) => {
+    return `<button data-k="${key}">${titulo}</button>`;
+  }).join('');
+
+  $('#nav').querySelectorAll('button').forEach(botao => {
+    botao.onclick = () => go(botao.dataset.k);
+  });
+
+  go(items[0][0]);
+}
+
+async function go(key) {
+  document.querySelectorAll('#nav button').forEach(botao => {
+    botao.classList.toggle('on', botao.dataset.k === key);
+  });
+
+  $('#main').innerHTML = '<p>Carregando…</p>';
+
+  if (key === 'dash') return dash();
+  if (key === 'cardapio') return cardapio();
+
+  return crud(key);
+}
+
+/* ---------------- Dashboard ---------------- */
+
+async function dash() {
+  const resposta = await call('dashboard');
+
+  if (!resposta.ok) {
+    $('#main').innerHTML =
+      `<div class="msg err">${esc(resposta.error)}</div>`;
+    return;
+  }
+
+  const d = resposta.data;
+
+  const indicadores = [
+    ['Usuários', d.usuarios],
+    ['Alunos/usuários', d.alunos],
+    ['Gestores', d.gestores],
+    ['Refeições', d.refeicoes]
+  ];
+
+  $('#main').innerHTML = `
+    <div class="grid">
+      ${indicadores.map(item => `
+        <div class="kpi">
+          ${item[0]}           <b>${item[1]}</b>
+        </div>
+      `).join('')}
     </div>
 
-  </div>
+    <div class="panel">
+      <h3>Próximas refeições</h3>
 
+      ${tbl(
+        ['Data', 'Horário', 'Período', 'Refeição'],
+        d.proximos.map(c => [
+          c.data,
+          c.horario,
+          c.periodo,
+          c.refeicao
+        ])
+      )}
+    </div>
+  `;
+}
 
-  <script>
+const tbl = (cabecalhos, linhas) => `
+  <table>
+    <thead>
+      <tr>
+        ${cabecalhos.map(item => `<th>${item}</th>`).join('')}
+      </tr>
+    </thead>
 
-    function carregarPagina(
-      nomeArquivo
-    ) {
+    <tbody>
+      ${linhas.length
+        ? linhas.map(linha => `
+            <tr>
+              ${linha.map(valor => `<td>${esc(valor)}</td>`).join('')}
+            </tr>
+          `).join('')
+        : `<tr>
+             <td colspan="${cabecalhos.length}">
+               Nenhum registro.
+             </td>
+           </tr>`
+      }
+    </tbody>
+  </table>
+`;
 
-      google.script.run
+/* ---------------- Consulta de cardápio (Interna / Logada) ---------------- */
 
-        .withSuccessHandler(
-          function(html) {
+async function cardapio() {
+  const agora = new Date();
+  const hoje = [
+    agora.getFullYear(),
+    String(agora.getMonth() + 1).padStart(2, '0'),
+    String(agora.getDate()).padStart(2, '0')
+  ].join('-');
 
-            if (!html) {
+  $('#main').innerHTML = `
+    <div class="panel">
+      <div class="filtro">
+        <div>
+          <label>De</label>
+          <input type="date" id="de" value="${hoje}">
+        </div>
 
-              alert(
-                "A página solicitada não foi encontrada."
-              );
+        <div>
+          <label>Até</label>
+          <input type="date" id="ate">
+        </div>
 
-              return;
+        <button id="bf">Filtrar</button>
+      </div>
+    </div>
+
+    <div id="lista"></div>
+  `;
+
+  const carregar = async () => {
+    const resposta = await call('cardapio', {
+      de: $('#de').value,
+      ate: $('#ate').value
+    });
+
+    if (!resposta.ok) {
+      $('#lista').innerHTML =
+        `<div class="msg err">${esc(resposta.error)}</div>`;
+      return;
+    }
+
+    const dados = resposta.data || [];
+
+    $('#lista').innerHTML = dados.length
+      ? dados.map(c => `
+          <div class="panel">
+            <b>
+              ${esc(c.data)} •
+              ${esc(c.periodo)} —
+              ${esc(c.horario)}
+            </b>
+
+            <h3>${esc(c.refeicao)}</h3>
+            <p>${esc(c.descricao)}</p>
+
+            ${c.observacao
+              ? `<p><i>Obs.: ${esc(c.observacao)}</i></p>`
+              : ''
             }
+          </div>
+        `).join('')
+      : '<div class="panel">Nenhum cardápio no período.</div>';
+  };
 
+  $('#bf').onclick = carregar;
+  carregar();
+}
 
-            document.open();
+/* ---------------- Listas auxiliares ---------------- */
 
-            document.write(
-              html
-            );
+async function refs() {
+  for (const nome of ['REFEICOES']) {
+    const resposta = await call('list', { sheet: nome });
+    D[nome] = resposta.ok ? resposta.data : [];
+  }
+}
 
-            document.close();
-          }
-        )
+/* ---------------- CRUD genérico ---------------- */
 
-        .withFailureHandler(
-          function(erro) {
+async function crud(sh) {
+  const config = E[sh];
 
-            alert(
-              (
-                erro &&
-                erro.message
-              ) ||
-              "Erro ao abrir a página."
-            );
-          }
-        )
+  if (!config) {
+    $('#main').innerHTML =
+      '<div class="msg err">Tela não encontrada.</div>';
+    return;
+  }
 
-        .include(
-          nomeArquivo
-        );
-    }
+  await refs();
 
+  const resposta = await call('list', { sheet: sh });
 
-    function abrirLoginEscolar() {
+  if (!resposta.ok) {
+    $('#main').innerHTML =
+      `<div class="msg err">${esc(resposta.error)}</div>`;
+    return;
+  }
 
-      carregarPagina(
-        "LoginAluno"
+  D[sh] = resposta.data;
+
+  const nomeRefeicao = id => {
+    return (
+      D.REFEICOES.find(x => x.id_refeicao == id) || {}
+    ).nome || '-';
+  };
+
+  const valorCelula = (linha, chave) => {
+    return chave === 'refeicao'
+      ? nomeRefeicao(linha.id_refeicao)
+      : linha[chave];
+  };
+
+  $('#main').innerHTML = `
+    <div class="bar">
+      <h2>${config.t}</h2>
+      <button id="novo">+ Novo</button>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            ${config.cols.map(coluna => `
+              <th>${coluna.replace('_', ' ')}</th>
+            `).join('')}
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${resposta.data.map(linha => `
+            <tr>
+              ${config.cols.map(chave => `
+                <td>
+                  ${chave === 'ativo'
+                    ? `<span class="tag ${linha[chave] === 'sim' ? '' : 'nao'}">${esc(linha[chave])}</span>`
+                    : esc(valorCelula(linha, chave))
+                  }
+                </td>
+              `).join('')}
+
+              <td class="ac">
+                <button class="sm sec" data-e="${linha[config.id]}">
+                  Editar
+                </button>
+
+                <button class="sm del" data-d="${linha[config.id]}">
+                  Excluir
+                </button>
+              </td>
+            </tr>
+          `).join('') || `
+            <tr>
+              <td colspan="${config.cols.length + 1}">
+                Nenhum registro.
+              </td>
+            </tr>
+          `}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  $('#novo').onclick = () => form(sh);
+
+  $('#main').querySelectorAll('[data-e]').forEach(botao => {
+    botao.onclick = () => {
+      const linha = D[sh].find(
+        x => x[config.id] == botao.dataset.e
       );
+
+      form(sh, linha);
+    };
+  });
+
+  $('#main').querySelectorAll('[data-d]').forEach(botao => {
+    botao.onclick = async () => {
+      if (!confirm('Excluir este registro e seus vínculos?')) {
+        return;
+      }
+
+      const resultado = await call('remove', {
+        sheet: sh,
+        id: botao.dataset.d
+      });
+
+      if (resultado.ok) {
+        crud(sh);
+      } else {
+        alert(resultado.error);
+      }
+    };
+  });
+}
+
+/* ---------------- Formulários ---------------- */
+
+function form(sh, linha) {
+  const config = E[sh];
+  const registro = linha || {};
+
+  $('#dform').innerHTML =
+    `<h3>${linha ? 'Editar' : 'Novo'} — ${config.t}</h3>` +
+
+    config.f.map(campo => {
+      let input;
+
+      const valor = campo.t === 'password'
+        ? ''
+        : esc(registro[campo.k]);
+
+      if (campo.o) {
+        const opcoes = campo.o === 'REFEICOES'
+          ? D.REFEICOES.map(x => [x.id_refeicao, x.nome])
+          : campo.o.map(x => [x, x]);
+
+        input = `
+          <select name="${campo.k}" required>
+            ${opcoes.map(([valorOpcao, textoOpcao]) => `
+              <option
+                value="${esc(valorOpcao)}"
+                ${valorOpcao == registro[campo.k] ? 'selected' : ''}
+              >
+                ${esc(textoOpcao)}
+              </option>
+            `).join('')}
+          </select>
+        `;
+      } else if (campo.t === 'textarea') {
+        input = `
+          <textarea name="${campo.k}" rows="3">${valor}</textarea>
+        `;
+      } else {
+        input = `
+          <input
+            name="${campo.k}"
+            type="${campo.t || 'text'}"
+            value="${valor}"
+            ${campo.t === 'password'
+              ? (linha ? '' : 'required minlength="6"')
+              : 'required'
+            }
+          >
+        `;
+      }
+
+      return `<label>${campo.l}</label>${input}`;
+    }).join('') +
+
+    `
+      <div id="dmsg"></div>
+
+      <button type="submit">Salvar</button>
+
+      <button
+        type="button"
+        class="sec"
+        style="width:100%;margin-top:.5rem"
+        onclick="$('#dlg').close()"
+      >
+        Cancelar
+      </button>
+    `;
+
+  $('#dform').onsubmit = async e => {
+    e.preventDefault();
+
+    const obj = {
+      ...registro,
+      ...formData(e.target)
+    };
+
+    const resposta = await call(
+      linha ? 'update' : 'create',
+      {
+        sheet: sh,
+        obj: obj
+      }
+    );
+
+    if (!resposta.ok) {
+      msg($('#dmsg'), resposta.error, false);
+      return;
     }
 
+    $('#dlg').close();
+    crud(sh);
+  };
 
-    function abrirLoginGestao() {
-
-      carregarPagina(
-        "LoginGestao"
-      );
-    }
-
-
-    function abrirCadastro() {
-
-      carregarPagina(
-        "Cadastro"
-      );
-    }
-
-  </script>
+  $('#dlg').showModal();
+}
+</script>
 
 </body>
-
 </html>
